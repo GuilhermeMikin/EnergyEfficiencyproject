@@ -271,7 +271,7 @@ class ClienteMODBUS():
                         value = 1
                     else:
                         value = 0
-                    self.inserirDB(addrs=(addr+ic-1), tipo="'Coil Status'", namep="'ON/OFF'", value=value)
+                    self.inserirDB(addrs=(addr+ic-1), tipo="'F01CS'", namep="'ON/OFF'", value=value)
             return 
 
         elif tipo == 2:
@@ -284,7 +284,7 @@ class ClienteMODBUS():
                     value = di[0 + idi]
                     idi += 1
                     print(value)
-                    self.inserirDB(addrs=(10000+addr+idi-1), tipo="'Input Status'", namep="'ON/OFF'",value=value)
+                    self.inserirDB(addrs=(10000+addr+idi-1), tipo="'F02IS'", namep="'ON/OFF'",value=value)
             return 
 
         elif tipo == 3:
@@ -297,7 +297,7 @@ class ClienteMODBUS():
                     value = hr[0+ihr]
                     ihr += 1
                     print(value)
-                    self.inserirDB(addrs=(40000+addr+ihr-1), tipo="'Holding Register'", namep="'Temperatura (C)'", value=value)
+                    self.inserirDB(addrs=(40000+addr+ihr-1), tipo="'F03HR'", namep="'Temperatura (C)'", value=value)
             return 
 
         elif tipo == 4:
@@ -310,7 +310,7 @@ class ClienteMODBUS():
                     value = ir[0 + iir]
                     iir += 1
                     print(value)
-                    self.inserirDB(addrs=(30000+addr+iir-1), tipo="'Input Register'",  namep="'Total Product'", value=value)
+                    self.inserirDB(addrs=(30000+addr+iir-1), tipo="'F04IR'",  namep="'Total Product'", value=value)
             return 
 
         else:
@@ -326,13 +326,11 @@ class ClienteMODBUS():
         while i < leng:
             if tipo == 3:
                 i1 = self._cliente.read_holding_registers(addr - 1 + g, 2)
-                tipore = "'Holding Register'"
-                namep = "'Voltage (V)'"
+                tipore = "'F03HR'"  
                 ende = 40000
             elif tipo == 4:
                 i1 = self._cliente.read_input_registers(addr - 1 + g, 2)
-                tipore = "'Input Register'"
-                namep = "'Velocity'"
+                tipore = "'F04IR'"
                 ende = 30000
             else:
                 print('Tipo inválido..')
@@ -367,6 +365,16 @@ class ClienteMODBUS():
                 mantpot -= 1
             value = ((-1)**sign)*(1+mantdec)*2**(expodec-127)
             print(f'{round(value, 3)}')
+            if y == 0:
+                namep = "'Corrente (kA)'"
+            elif y == 2:
+                namep = "'Tensão (kV)'"
+            elif y == 4:
+                namep = "'Potência (kVA)'"
+            elif y == 6:
+                namep = "'Fator de Potência (kVAr)'"
+            else:
+                namep = "'-Unknown-'"
             y += 2
             self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore, namep=namep, value=round(value, 3))
         return
@@ -381,13 +389,11 @@ class ClienteMODBUS():
         while i < leng:
             if tipo == 3:
                 i1 = self._cliente.read_holding_registers(addr - 1 + g, 2)
-                tipore = "'Holding Register'"
-                namep = "'Current (A)'"
+                tipore = "'F03HR'"
                 ende = 40000
             elif tipo == 4:
                 i1 = self._cliente.read_input_registers(addr - 1 + g, 2)
-                tipore = "'Input Register'"
-                namep = "'Voltage (V)'"
+                tipore = "'F04IR'"
                 ende = 30000
             else:
                 print('Tipo inválido..')
@@ -423,6 +429,16 @@ class ClienteMODBUS():
                 mantpot -= 1
             value = ((-1)**sign)*(1+mantdec)*2**(expodec-127)
             print(f'{round(value, 3)}')
+            if y == 0:
+                namep = "'Corrente (kA)'"
+            elif y == 2:
+                namep = "'Tensão (kV)'"
+            elif y == 4:
+                namep = "'Potência (kVA)'"
+            elif y == 6:
+                namep = "'Fator de Potência (kVAr)'"
+            else:
+                namep = "'-Unknown-'"
             y += 2
             self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore,  namep=namep, value=round(value, 3))
         return

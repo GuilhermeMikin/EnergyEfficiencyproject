@@ -1,6 +1,8 @@
 # pyModbusClient
  Um cliente Modbus com pyModbusTCP.
  - Com banco de dados SQLite
+ 
+- Dando nomes a algumas variáveis simuladas para início de monitoramento de eficiência energética...
 
 Reading modbus displays:
 
