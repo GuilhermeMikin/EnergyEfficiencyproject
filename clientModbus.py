@@ -9,7 +9,7 @@ class ClienteMODBUS():
     Classe Cliente MODBUS
     """
 
-    def __init__(self, server_ip, porta, scan_time=1, valor=0, date='xxxx-xx-xx xx:xx:xx', dbpath="C:\database3.db"):
+    def __init__(self, server_ip, porta, scan_time=1, valor=0, date='xxxx-xx-xx xx:xx:xx', dbpath="C:\database.db"):
         """
         Construtor
         """
@@ -28,7 +28,7 @@ class ClienteMODBUS():
         """
         try:
             self._cliente.open()
-            print('Cliente conectado..')
+            print('\n\033[33mCliente conectado..\033[m\n')
 
         except Exception as e:
             print('\033[31mERRO: ', e.args, '\033[m')
@@ -39,8 +39,9 @@ class ClienteMODBUS():
                 print('-' * 34)
                 print('Cliente Mosbus'.center(34))
                 print('-' * 34)
-                sel = input("Qual serviço? \n1- Leitura \n2- Escrita \n3- Configuração \n4- Sair \nServiço: ")
+                sel = input("Qual serviço? \n1- Leitura \n2- Escrita \n3- Configuração \n4- DataBase \n5- Sair \nServiço: ")
                 if sel == '1':
+                    self.createTable()
                     print('\nQual tipo de dado deseja ler?')
                     print("1- Coil Status \n2- Input Status \n3- Holding Register \n4- Input Register")
                     while True:
@@ -190,8 +191,14 @@ class ClienteMODBUS():
                 elif sel == '3':
                     scant = input('Novo tempo de varredura [s]: ')
                     self._scan_time = float(scant)
-
+                
                 elif sel == '4':
+                    self.createTable()
+                    print('Leitura banco de dados:')
+                    self.readDB()
+                    print('Fim de leitura de banco de dados!')
+
+                elif sel == '5':
                     sleep(0.2)
                     print('\n\033[32mFechando sistema..\033[m')
                     sleep(0.5)
@@ -212,7 +219,7 @@ class ClienteMODBUS():
         try:
             sql_str = f"""
             CREATE TABLE IF NOT EXISTS pointValues (
-                ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, Endereço NUMERIC, Tipo TEXT, Valor REAL, TimeStamp1 TEXT NOT NULL)
+                ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, Addr NUMERIC, Type TEXT, NameParam TEXT, Value REAL, TimeStamp1 TEXT NOT NULL)
                 """
             self._cursor.execute(sql_str)
             self._con.commit()
@@ -220,14 +227,26 @@ class ClienteMODBUS():
             print('\033[31mERRO: ', e.args, '\033[m')
 
 
-    def inserirDB(self, addrs, tipo, value):
+    def inserirDB(self, addrs, tipo, namep, value):
+        """
+        Método para inserção dos dados no DB
+        """
+        try:
+            str_values = f"{addrs}, {tipo}, {namep}, {value}, '{self._date}'"
+            sql_str = f'INSERT INTO pointValues (Addr, Type, NameParam, Value, TimeStamp1) VALUES ({str_values})'
+            self._cursor.execute(sql_str)
+            self._con.commit()
+            #self._con.close()
+        except Exception as e:
+            print('\033[31mERRO: ', e.args, '\033[m')
+    
+    def readDB(self):
         """
         Método para inserção dos dados no DB
         """
         try:
             self.createTable()
-            str_values = f"{addrs}, {tipo}, {value} , '{self._date}'"
-            sql_str = f'INSERT INTO pointValues (Endereço, Tipo, Valor, TimeStamp1) VALUES ({str_values})'
+            sql_str = f'SELECT * FROM pointValues'
             self._cursor.execute(sql_str)
             self._con.commit()
             #self._con.close()
@@ -252,7 +271,7 @@ class ClienteMODBUS():
                         value = 1
                     else:
                         value = 0
-                    self.inserirDB(addrs=(00000+addr+ic-1), tipo="'Coil Status'",value=value)
+                    self.inserirDB(addrs=(addr+ic-1), tipo="'Coil Status'", namep="'ON/OFF'", value=value)
             return 
 
         elif tipo == 2:
@@ -265,7 +284,7 @@ class ClienteMODBUS():
                     value = di[0 + idi]
                     idi += 1
                     print(value)
-                    self.inserirDB(addrs=(10000+addr+idi-1), tipo="'Input Status'",value=value)
+                    self.inserirDB(addrs=(10000+addr+idi-1), tipo="'Input Status'", namep="'ON/OFF'",value=value)
             return 
 
         elif tipo == 3:
@@ -278,7 +297,7 @@ class ClienteMODBUS():
                     value = hr[0+ihr]
                     ihr += 1
                     print(value)
-                    self.inserirDB(addrs=(40000+addr+ihr-1), tipo="'Holding Register'",value=value)
+                    self.inserirDB(addrs=(40000+addr+ihr-1), tipo="'Holding Register'", namep="'Temperatura (C)'", value=value)
             return 
 
         elif tipo == 4:
@@ -291,7 +310,7 @@ class ClienteMODBUS():
                     value = ir[0 + iir]
                     iir += 1
                     print(value)
-                    self.inserirDB(addrs=(30000+addr+iir-1), tipo="'Input Register'",value=value)
+                    self.inserirDB(addrs=(30000+addr+iir-1), tipo="'Input Register'",  namep="'Total Product'", value=value)
             return 
 
         else:
@@ -308,10 +327,12 @@ class ClienteMODBUS():
             if tipo == 3:
                 i1 = self._cliente.read_holding_registers(addr - 1 + g, 2)
                 tipore = "'Holding Register'"
+                namep = "'Voltage (V)'"
                 ende = 40000
             elif tipo == 4:
                 i1 = self._cliente.read_input_registers(addr - 1 + g, 2)
                 tipore = "'Input Register'"
+                namep = "'Velocity'"
                 ende = 30000
             else:
                 print('Tipo inválido..')
@@ -347,7 +368,7 @@ class ClienteMODBUS():
             value = ((-1)**sign)*(1+mantdec)*2**(expodec-127)
             print(f'{round(value, 3)}')
             y += 2
-            self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore, value=round(value, 3))
+            self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore, namep=namep, value=round(value, 3))
         return
 
     def lerDadoFloatSwapped(self, tipo, addr, leng):
@@ -361,10 +382,12 @@ class ClienteMODBUS():
             if tipo == 3:
                 i1 = self._cliente.read_holding_registers(addr - 1 + g, 2)
                 tipore = "'Holding Register'"
+                namep = "'Current (A)'"
                 ende = 40000
             elif tipo == 4:
                 i1 = self._cliente.read_input_registers(addr - 1 + g, 2)
                 tipore = "'Input Register'"
+                namep = "'Voltage (V)'"
                 ende = 30000
             else:
                 print('Tipo inválido..')
@@ -401,7 +424,7 @@ class ClienteMODBUS():
             value = ((-1)**sign)*(1+mantdec)*2**(expodec-127)
             print(f'{round(value, 3)}')
             y += 2
-            self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore, value=round(value, 3))
+            self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore,  namep=namep, value=round(value, 3))
         return
 
 
