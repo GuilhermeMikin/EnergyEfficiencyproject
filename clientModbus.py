@@ -39,7 +39,7 @@ class ClienteMODBUS():
                 print('-' * 34)
                 print('Cliente Mosbus'.center(34))
                 print('-' * 34)
-                sel = input("Qual serviço? \n1- Leitura \n2- Escrita \n3- Configuração \n4- DataBase \n5- Sair \nServiço: ")
+                sel = input("Qual serviço? \n1- Leitura \n2- Escrita \n3- Configuração \n4- Sair \nServiço: ")
                 if sel == '1':
                     self.createTable()
                     print('\nQual tipo de dado deseja ler?')
@@ -193,17 +193,11 @@ class ClienteMODBUS():
                     self._scan_time = float(scant)
                 
                 elif sel == '4':
-                    self.createTable()
-                    print('Leitura banco de dados:')
-                    self.readDB()
-                    print('Fim de leitura de banco de dados!')
-
-                elif sel == '5':
                     sleep(0.2)
                     print('\n\033[32mFechando sistema..\033[m')
                     sleep(0.5)
                     self._cliente.close()
-                    atendimento = False
+                    atendimento = False                    
 
                 else:
                     sleep(0.3)
@@ -239,19 +233,7 @@ class ClienteMODBUS():
             #self._con.close()
         except Exception as e:
             print('\033[31mERRO: ', e.args, '\033[m')
-    
-    def readDB(self):
-        """
-        Método para inserção dos dados no DB
-        """
-        try:
-            self.createTable()
-            sql_str = f'SELECT * FROM pointValues'
-            self._cursor.execute(sql_str)
-            self._con.commit()
-            #self._con.close()
-        except Exception as e:
-            print('\033[31mERRO: ', e.args, '\033[m')
+
 
     def lerDado(self, tipo, addr, leng=1):
         """
@@ -367,16 +349,21 @@ class ClienteMODBUS():
             print(f'{round(value, 3)}')
             if y == 0:
                 namep = "'Corrente (kA)'"
+                valuec = round(value, 3)
             elif y == 2:
                 namep = "'Tensão (kV)'"
+                valuet = round(value, 3)
             elif y == 4:
-                namep = "'Potência (kVA)'"
+                namep = "'Temperatura (C°)'"
             elif y == 6:
-                namep = "'Fator de Potência (kVAr)'"
+                namep = "'Contagem'"
             else:
                 namep = "'-Unknown-'"
             y += 2
             self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore, namep=namep, value=round(value, 3))
+        namepot = "'Potência (kVA)'"
+        valuepot = valuet*valuec
+        self.inserirDB(addrs=(ende+addr+y), tipo=tipore, namep=namepot, value=valuepot)
         return
 
     def lerDadoFloatSwapped(self, tipo, addr, leng):
@@ -431,16 +418,21 @@ class ClienteMODBUS():
             print(f'{round(value, 3)}')
             if y == 0:
                 namep = "'Corrente (kA)'"
+                valuec = round(value, 3)
             elif y == 2:
                 namep = "'Tensão (kV)'"
+                valuet = round(value, 3)
             elif y == 4:
-                namep = "'Potência (kVA)'"
+                namep = "'Temperatura (C°)'"
             elif y == 6:
-                namep = "'Fator de Potência (kVAr)'"
+                namep = "'Contagem'"
             else:
                 namep = "'-Unknown-'"
             y += 2
             self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore,  namep=namep, value=round(value, 3))
+        namepot = "'Potência (kVA)'"
+        valuepot = valuet*valuec
+        self.inserirDB(addrs=(ende+addr+y), tipo=tipore, namep=namepot, value=valuepot)
         return
 
 
@@ -462,3 +454,15 @@ class ClienteMODBUS():
             print('\033[31mERRO: ', e.args, '\033[m')
 
     
+    # def readDB(self):
+    #     """
+    #     Método para inserção dos dados no DB
+    #     """
+    #     try:
+    #         self.createTable()
+    #         sql_str = f'SELECT * FROM pointValues'
+    #         self._cursor.execute(sql_str)
+    #         self._con.commit()
+    #         #self._con.close()
+    #     except Exception as e:
+    #         print('\033[31mERRO: ', e.args, '\033[m')
