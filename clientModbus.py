@@ -1,5 +1,7 @@
 from pyModbusTCP.client import ModbusClient
 from time import sleep
+import time
+import datetime
 import sqlite3
 from threading import Lock
 
@@ -9,7 +11,7 @@ class ClienteMODBUS():
     Classe Cliente MODBUS
     """
 
-    def __init__(self, server_ip, porta, scan_time=1, valor=0, date='xxxx-xx-xx xx:xx:xx', dbpath="C:\database.db"):
+    def __init__(self, server_ip, porta, scan_time=1, valor=0, dbpath="C:\database.db"):
         """
         Construtor
         """
@@ -18,7 +20,6 @@ class ClienteMODBUS():
         
         self._dbpath = dbpath
         self._valor = valor
-        self._date = date
         self._con = sqlite3.connect(self._dbpath)
         self._cursor = self._con.cursor()
 
@@ -226,7 +227,8 @@ class ClienteMODBUS():
         Método para inserção dos dados no DB
         """
         try:
-            str_values = f"{addrs}, {tipo}, {namep}, {value}, '{self._date}'"
+            date = str(datetime.datetime.fromtimestamp(int(time.time())).strftime("%Y-%m-%d %H:%M:%S"))
+            str_values = f"{addrs}, {tipo}, {namep}, {value}, '{date}'"
             sql_str = f'INSERT INTO pointValues (Addr, Type, NameParam, Value, TimeStamp1) VALUES ({str_values})'
             self._cursor.execute(sql_str)
             self._con.commit()
