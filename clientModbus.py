@@ -348,22 +348,26 @@ class ClienteMODBUS():
             value = ((-1)**sign)*(1+mantdec)*2**(expodec-127)
             print(f'{round(value, 3)}')
             if y == 0:
-                namep = "'Corrente (kA)'"
-                valuec = round(value, 3)
+                namep = "'Corrente (A)'"
+                valuec = round(value, 2)
             elif y == 2:
-                namep = "'Tensão (kV)'"
-                valuet = round(value, 3)
+                namep = "'Tensão (V)'"
+                valuet = round(value, 2)
             elif y == 4:
                 namep = "'Temperatura (C°)'"
             elif y == 6:
-                namep = "'Contagem'"
+                namep = "'Potência aparente (kVA)'"
+                potapar = round(value, 3)
             else:
                 namep = "'-Unknown-'"
             y += 2
-            self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore, namep=namep, value=round(value, 3))
-        namepot = "'Potência (kVA)'"
-        valuepot = valuet*valuec
-        self.inserirDB(addrs=(ende+addr+y), tipo=tipore, namep=namepot, value=valuepot)
+            self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore,  namep=namep, value=round(value, 2))
+        npotativa = "'Potência ativa (kW)'"
+        potativa = valuet*valuec/1000
+        self.inserirDB(addrs=(ende+addr+y), tipo=tipore, namep=npotativa, value=round(potativa, 2))
+        nfpot = "'Fator de Potência'"
+        fatpot = potativa/potapar
+        self.inserirDB(addrs=(ende+addr+y),tipo=tipore,namep=nfpot,value=round(fatpot,2))
         return
 
     def lerDadoFloatSwapped(self, tipo, addr, leng):
@@ -417,22 +421,26 @@ class ClienteMODBUS():
             value = ((-1)**sign)*(1+mantdec)*2**(expodec-127)
             print(f'{round(value, 3)}')
             if y == 0:
-                namep = "'Corrente (kA)'"
-                valuec = round(value, 3)
+                namep = "'Corrente (A)'"
+                valuec = round(value, 2)
             elif y == 2:
-                namep = "'Tensão (kV)'"
-                valuet = round(value, 3)
+                namep = "'Tensão (V)'"
+                valuet = round(value, 2)
             elif y == 4:
                 namep = "'Temperatura (C°)'"
             elif y == 6:
-                namep = "'Contagem'"
+                namep = "'Potência aparente (kVA)'"
+                potapar = round(value, 3)
             else:
                 namep = "'-Unknown-'"
             y += 2
-            self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore,  namep=namep, value=round(value, 3))
-        namepot = "'Potência (kVA)'"
-        valuepot = valuet*valuec
-        self.inserirDB(addrs=(ende+addr+y), tipo=tipore, namep=namepot, value=valuepot)
+            self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore,  namep=namep, value=round(value, 2))
+        npotativa = "'Potência ativa (kW)'"
+        potativa = valuet*valuec/1000
+        self.inserirDB(addrs=(ende+addr+y), tipo=tipore, namep=npotativa, value=round(potativa, 2))
+        nfpot = "'Fator de Potência'"
+        fatpot = potativa/potapar
+        self.inserirDB(addrs=(ende+addr+y),tipo=tipore,namep=nfpot,value=round(fatpot,2))        
         return
 
 
