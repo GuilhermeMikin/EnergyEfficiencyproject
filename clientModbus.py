@@ -43,6 +43,7 @@ class ClienteMODBUS():
                 sel = input("Qual serviço? \n1- Leitura \n2- Escrita \n3- Configuração \n4- Sair \nServiço: ")
                 if sel == '1':
                     self.createTable()
+                    self.createTable2()
                     print('\nQual tipo de dado deseja ler?')
                     print("1- Coil Status \n2- Input Status \n3- Holding Register \n4- Input Register")
                     while True:
@@ -221,6 +222,20 @@ class ClienteMODBUS():
         except Exception as e:
             print('\033[31mERRO: ', e.args, '\033[m')
 
+    def createTable2(self):
+        """
+        Método que cria a tabela para armazenamento dos dados, caso ela não exista (com variáveis separadas por coluna)
+        """
+        try:
+            sql_str = f"""
+            CREATE TABLE IF NOT EXISTS energyTable (
+                Leitura INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "Corrente (A)" REAL, "Tensão (V)" REAL, "P. Aparante (kVA)" REAL, "P. Ativa (kW)" REAL, "Fator de Potência" REAL, TimeStamp1 TEXT NOT NULL)
+                """
+            self._cursor.execute(sql_str)
+            self._con.commit()
+        except Exception as e:
+            print('\033[31mERRO: ', e.args, '\033[m')
+
 
     def inserirDB(self, addrs, tipo, namep, value):
         """
@@ -230,6 +245,20 @@ class ClienteMODBUS():
             date = str(datetime.datetime.fromtimestamp(int(time.time())).strftime("%Y-%m-%d %H:%M:%S"))
             str_values = f"{addrs}, {tipo}, {namep}, {value}, '{date}'"
             sql_str = f'INSERT INTO pointValues (Addr, Type, NameParam, Value, TimeStamp1) VALUES ({str_values})'
+            self._cursor.execute(sql_str)
+            self._con.commit()
+            #self._con.close()
+        except Exception as e:
+            print('\033[31mERRO: ', e.args, '\033[m')
+
+    def inserirDB2(self, valuec, valuet, potapar, potativa, fatpot):
+        """
+        Método para inserção dos dados no DB
+        """
+        try:
+            date = str(datetime.datetime.fromtimestamp(int(time.time())).strftime("%Y-%m-%d %H:%M:%S"))
+            str_values = f"{valuec}, {valuet}, {potapar}, {potativa},{fatpot}, '{date}'"
+            sql_str = f'INSERT INTO energyTable ("Corrente (A)", "Tensão (V)", "P. Aparante (kVA)", "P. Ativa (kW)", "Fator de Potência", TimeStamp1) VALUES ({str_values})'
             self._cursor.execute(sql_str)
             self._con.commit()
             #self._con.close()
@@ -370,6 +399,7 @@ class ClienteMODBUS():
         nfpot = "'Fator de Potência'"
         fatpot = potativa/potapar
         self.inserirDB(addrs=(ende+addr+y),tipo=tipore,namep=nfpot,value=round(fatpot,2))
+        self.inserirDB2(valuec=valuec, valuet=valuet, potapar=potapar, potativa=round(potativa, 3), fatpot=round(fatpot, 2))
         return
 
     def lerDadoFloatSwapped(self, tipo, addr, leng):
@@ -442,7 +472,8 @@ class ClienteMODBUS():
         self.inserirDB(addrs=(ende+addr+y), tipo=tipore, namep=npotativa, value=round(potativa, 2))
         nfpot = "'Fator de Potência'"
         fatpot = potativa/potapar
-        self.inserirDB(addrs=(ende+addr+y),tipo=tipore,namep=nfpot,value=round(fatpot,2))        
+        self.inserirDB(addrs=(ende+addr+y),tipo=tipore,namep=nfpot,value=round(fatpot,2))
+        self.inserirDB2(valuec=valuec, valuet=valuet, potapar=potapar, potativa=round(potativa, 3), fatpot=round(fatpot, 2))       
         return
 
 
