@@ -300,7 +300,7 @@ class ClienteMODBUS():
         Método para inserção dos dados do motor no DB
         """
         try:
-            pnmotorkw = float(pnmotor*7457)/10000
+            pnmotorkw = float(pnmotor*7355)/10000
             pnmotorkw = round(pnmotorkw)
             str_values = f"'{modmotor}', {codmotor}, {pnmotor}, {pnmotorkw}, {rpmmotor},{rendmotor}, {fpmotor}"
             sql_str = f'INSERT INTO motorTable (Modelo, "Código", "P. Nominal (CV)", "P. Nominal (kW)", RPM, "Rendimento (%)", "Fator de Potência") VALUES ({str_values})'
