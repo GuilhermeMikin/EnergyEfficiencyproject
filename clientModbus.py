@@ -11,7 +11,7 @@ class ClienteMODBUS():
     Classe Cliente MODBUS
     """
 
-    def __init__(self, server_ip, porta, scan_time=1, valor=0, dbpath="C:\database.db"):
+    def __init__(self, server_ip, porta, scan_time=2, valor=0, dbpath="C:\database.db"):
         """
         Construtor
         """
@@ -40,7 +40,7 @@ class ClienteMODBUS():
                 print('-' * 34)
                 print('Cliente Mosbus'.center(34))
                 print('-' * 34)
-                sel = input("Qual serviço? \n1- Leitura \n2- Escrita \n3- Configuração \n4- Sair \nServiço: ")
+                sel = input("Qual serviço? \n1- Leitura \n2- Escrita \n3- Configuração de leitura \n4- Cadastrar Motor \n5- Sair \nServiço: ")
                 if sel == '1':
                     self.createTable()
                     self.createTable2()
@@ -195,6 +195,21 @@ class ClienteMODBUS():
                     self._scan_time = float(scant)
                 
                 elif sel == '4':
+                    self.createTableMotor()
+                    modmotor = str(input('\nModelo do motor: '))
+                    codmotor = str(input('Código: '))
+                    pnmotor = float(input('Potência nominal (CV): '))
+                    rpmmotor = int(input('RPM: '))
+                    rendmotor = float(input('Rendimento (%): '))
+                    fpmotor = float(input('Fator de Potência: '))
+                    try:
+                        self.inserirDBMotor(modmotor=modmotor, codmotor=codmotor, pnmotor=pnmotor, rpmmotor=rpmmotor, rendmotor=rendmotor, fpmotor=fpmotor)
+                        sleep(0.5)
+                    except Exception as e:
+                        print('Erro ao cadastrar motor!')
+                        print('\033[31mERRO: ', e.args, '\033[m')
+
+                elif sel == '5':
                     sleep(0.2)
                     print('\n\033[32mFechando sistema..\033[m')
                     sleep(0.5)
@@ -236,6 +251,21 @@ class ClienteMODBUS():
         except Exception as e:
             print('\033[31mERRO: ', e.args, '\033[m')
 
+    def createTableMotor(self):
+        """
+        Método que cria a tabela para cadastramento de motores)
+        
+        """
+        try:
+            sql_str = f"""
+            CREATE TABLE IF NOT EXISTS motorTable (
+                "ID" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "Modelo" TEXT, "Código" TEXT, "P. Nominal (CV)" INTEGER, "P. Nominal (kW)" REAL, "RPM" INTEIRO, "Rendimento (%)" REAL, "Fator de Potência" REAL)
+                """
+            self._cursor.execute(sql_str)
+            self._con.commit()
+        except Exception as e:
+            print('Erro ao criar tabelo motor!')
+            print('\033[31mERRO: ', e.args, '\033[m')
 
     def inserirDB(self, addrs, tipo, namep, value):
         """
@@ -265,6 +295,24 @@ class ClienteMODBUS():
         except Exception as e:
             print('\033[31mERRO: ', e.args, '\033[m')
 
+    def inserirDBMotor(self,modmotor,codmotor,pnmotor,rpmmotor,rendmotor,fpmotor):
+        """
+        Método para inserção dos dados do motor no DB
+        """
+        try:
+            pnmotorkw = float(pnmotor*7457)/10000
+            pnmotorkw = round(pnmotorkw)
+            str_values = f"'{modmotor}', {codmotor}, {pnmotor}, {pnmotorkw}, {rpmmotor},{rendmotor}, {fpmotor}"
+            sql_str = f'INSERT INTO motorTable (Modelo, "Código", "P. Nominal (CV)", "P. Nominal (kW)", RPM, "Rendimento (%)", "Fator de Potência") VALUES ({str_values})'
+            self._cursor.execute(sql_str)
+            self._con.commit()
+            #self._con.close()
+            sleep(0.3)
+            print('\nMotor cadastrado com sucesso!\n')
+            sleep(0.3)
+        except Exception as e:
+            print('Erro ao inserir DBmotor')
+            print('\033[31mERRO: ', e.args, '\033[m')
 
     def lerDado(self, tipo, addr, leng=1):
         """
