@@ -12,3 +12,4 @@ __pycache__/clientModbus.cpython-38.pyc
 *.pyc
 *.pyc
 DB/database.db
+*.db
