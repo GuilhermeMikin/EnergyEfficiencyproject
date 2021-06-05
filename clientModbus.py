@@ -23,6 +23,8 @@ class ClienteMODBUS():
         self._con = sqlite3.connect(self._dbpath)
         self._cursor = self._con.cursor()
 
+        self.motores = list()
+
     def atendimento(self):
         """
         Método para atendimento do usuário
@@ -33,14 +35,14 @@ class ClienteMODBUS():
 
         except Exception as e:
             print('\033[31mERRO: ', e.args, '\033[m')
-
         try:
             atendimento = True
             while atendimento:
                 print('-' * 34)
                 print('Cliente Mosbus'.center(34))
                 print('-' * 34)
-                sel = input("Qual serviço? \n1- Leitura \n2- Escrita \n3- Configuração de leitura \n4- Cadastrar Motor \n5- Sair \nServiço: ")
+                # sel = input("Qual serviço? \n1- Leitura \n2- Escrita \n3- Configuração de leitura \n4- Cadastrar Motor \n5- Sair \nServiço: ")
+                sel = input("Qual serviço? \n1- Leitura Modbus \n2- Escrita Modbus \n3- Configuração de leitura \n4- Cadastrar Motor \n5- Leitura Motor \n6- Sair \nServiço: ")
                 if sel == '1':
                     self.createTable()
                     self.createTableenergy()
@@ -196,22 +198,72 @@ class ClienteMODBUS():
                 
                 elif sel == '4':
                     self.createTableMotor()
-                    modmotor = str(input('\nModelo do motor: '))
-                    polmotor = str(input('N° Polos: '))
-                    pnmotor = float(input('Potência nominal (CV): '))
-                    Vmotor = float(input('Tensão nominal (V): '))
-                    Imotor = float(input('Corrente nominal (A): '))
-                    rpmmotor = int(input('Rotação Nominal (RPM): '))
-                    rendmotor = float(input('Rendimento (%): '))
-                    fpmotor = float(input('Fator de Potência: '))
-                    try:
-                        self.inserirDBMotor(modmotor=modmotor, polmotor=polmotor, pnmotor=pnmotor, Vmotor=Vmotor, Imotor=Imotor, rpmmotor=rpmmotor, rendmotor=rendmotor, fpmotor=fpmotor)
-                        sleep(0.5)
-                    except Exception as e:
-                        print('Erro ao cadastrar motor!')
-                        print('\033[31mERRO: ', e.args, '\033[m')
+                    dados_motor = dict()
+                    while True:
+                        dados_motor.clear()
+                        modmotor = str(input('\nModelo do motor: '))
+                        dados_motor['modmotor'] = modmotor
+                        polmotor = str(input('N° Polos: '))
+                        dados_motor['polmotor'] = polmotor
+                        pnmotor = float(input('Potência nominal (CV): '))
+                        dados_motor['pnmotor'] = pnmotor
+                        Vmotor = float(input('Tensão nominal (V): '))
+                        dados_motor['Vmotor'] = Vmotor
+                        Imotor = float(input('Corrente nominal (A): '))
+                        dados_motor['Imotor'] = Imotor
+                        rpmmotor = int(input('Rotação Nominal (RPM): '))
+                        dados_motor['rpmmotor'] = rpmmotor
+                        rendmotor = float(input('Rendimento (%): '))
+                        dados_motor['rendmotor'] = rendmotor
+                        fpmotor = float(input('Fator de Potência: '))
+                        dados_motor['fpmotor'] = fpmotor
+                        addrmotor = int(input('Endereço Modbus do motor: '))
+                        dados_motor['addrmotor'] = addrmotor
+                        self.motores.append(dados_motor.copy())
+                        try:
+                            self.inserirDBMotor(modmotor=modmotor, polmotor=polmotor, pnmotor=pnmotor, Vmotor=Vmotor, Imotor=Imotor, rpmmotor=rpmmotor, rendmotor=rendmotor, fpmotor=fpmotor, addrmotor=addrmotor)
+                            sleep(0.5)
+                        except Exception as e:
+                            print('Erro ao cadastrar motor!')
+                            print('\033[31mERRO: ', e.args, '\033[m')
+                        while True:    
+                            resp = str(input('Deseja cadastrar mais um motor? [S/N] ')).upper()[0]
+                            if resp in 'SN':
+                                break
+                            print('\033[31mERRO! Responda apenas S ou N.\033[m')
+                        if resp == 'N':
+                            break
+                    print(f'Foram cadastrados {len(self.motores)} motores.')
 
                 elif sel == '5':
+                    self.createTable()
+                    self.createTableenergy()
+                    if len(self.motores) >= 1:
+                        print('\nLista de motores cadastrados: ')
+                        idmotor = 1
+                        for mot in self.motores:
+                            print(f'  \033[32mMotor {idmotor}:\033[m Modelo {mot["modmotor"]}')
+                            idmotor = idmotor + 1
+                        while True:
+                            readm = int(input('\nQual motor deseja ler: '))
+                            if readm <= len(self.motores):
+                                break
+                            print('\033[31mERRO! Digite um ID de motor válido.\033[m')
+                        nvezes = input('Quantidade de leituras: ')
+                        print(f'\nComeçando leitura motor {readm}..\n')
+                        self.createTableReadMotor(readm)
+                        sleep(1)
+                        for i in range(0, int(nvezes)):
+                            print(f'\033[33mLeitura {i + 1}:\033[m')
+                            self.lerMotor(int(readm), self.motores)
+                            sleep(self._scan_time)
+                        print(f'\nValores do motor {readm} lidos e inseridos no DB com sucesso!!\n')
+                        sleep(0.8)
+                    else:
+                        print(f'\033[33m\nNão existem motores cadastrados!\033[m \nCadastre pelo menos um motor.\n')
+                        sleep(2)
+                    
+                elif sel == '6':
                     sleep(0.2)
                     print('\n\033[32mFechando sistema..\033[m')
                     sleep(0.5)
@@ -262,7 +314,7 @@ class ClienteMODBUS():
         try:
             sql_str = f"""
             CREATE TABLE IF NOT EXISTS motorTable (
-                "ID" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "Modelo" TEXT, "N° Polos" INTEGER, "P. Nominal (CV)" REAL, "P. Mecânica (kW)" REAL, "Tensão Nominal (V)" INTEGER, "Corrente Nominal (A)" REAL, "Rotação Nominal (RPM)" INTEGER, "Rendimento (%)" REAL, "Fator de Potência" REAL)
+                "ID" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "Modelo" TEXT, "N° Polos" INTEGER, "P. Nominal (CV)" REAL, "P. Mecânica (W)" REAL, "Tensão Nominal (V)" INTEGER, "Corrente Nominal (A)" REAL, "Rotação Nominal (RPM)" INTEGER, "Rendimento (%)" REAL, "Fator de Potência" REAL, "AddrModbus" TEXT)
                 """
             self._cursor.execute(sql_str)
             self._con.commit()
@@ -270,6 +322,22 @@ class ClienteMODBUS():
             print('Erro ao criar tabelo motor!')
             print('\033[31mERRO: ', e.args, '\033[m')
 
+    def createTableReadMotor(self, readm):
+        """
+        Método que cria a tabela para leitura de motores)
+        
+        """
+        try:
+            sql_str = f"""
+            CREATE TABLE IF NOT EXISTS motoread{readm}Table (
+                "Leitura" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "P. Mecânica (W)" REAL, "Tensão Nominal (V)" INTEGER, "Tensão Medida (V)" REAL, "Corrente Nominal (A)" REAL, "Corrente Medida (A)" REAL, "Rendimento Motor (%)" REAL, "FP Motor" REAL, "P. Aparente (VA)" REAL, "Temperatura (C°)" REAL, TimeStamp1 TEXT NOT NULL)
+                """
+            self._cursor.execute(sql_str)
+            self._con.commit()
+        except Exception as e:
+            print('Erro ao criar tabelo motor!')
+            print('\033[31mERRO: ', e.args, '\033[m')
+    
     def inserirDB(self, addrs, tipo, namep, value):
         """
         Método para inserção dos dados no DB
@@ -284,7 +352,7 @@ class ClienteMODBUS():
         except Exception as e:
             print('\033[31mERRO: ', e.args, '\033[m')
 
-    def inserirDBenergy(self, valuec, valuet, potel, potap, valuetemp):
+    def inserirDBenergy(self, valuec, valuet, potap, valuetemp):
         """
         Método para inserção dos dados no DB
         (valuec=valuec, valuet=valuet, potel=potel, valuetemp=valuetemp)
@@ -302,7 +370,7 @@ class ClienteMODBUS():
                 acrtemp =+ 17
             else:
                 acrtemp = 0
-            str_values = f"{valuec}, {valuet}, {potel}, {potap}, {valuetemp+acrtemp}, '{date}'"
+            str_values = f"{valuec}, {valuet}, {potap}, {valuetemp+acrtemp}, '{date}'"
             sql_str = f'INSERT INTO energyTable ("Corrente (A)", "Tensão (V)", "P. Aparente (VA)", "Temperatura (C°)", TimeStamp1) VALUES ({str_values})'
             self._cursor.execute(sql_str)
             self._con.commit()
@@ -310,7 +378,7 @@ class ClienteMODBUS():
         except Exception as e:
             print('\033[31mERRO: ', e.args, '\033[m')
 
-    def inserirDBMotor(self,modmotor,polmotor,pnmotor,Vmotor,Imotor,rpmmotor,rendmotor,fpmotor):
+    def inserirDBMotor(self,modmotor,polmotor,pnmotor,Vmotor,Imotor,rpmmotor,rendmotor,fpmotor,addrmotor):
         """
         Método para inserção dos dados do motor no DB
             modmotor = str(input('\nModelo do motor: '))
@@ -325,8 +393,8 @@ class ClienteMODBUS():
         try:
             pnmotorkw = float(pnmotor*7355)/10000
             pnmotorkw = round(pnmotorkw, 3)
-            str_values = f"'{modmotor}', {polmotor}, {pnmotor}, {pnmotorkw}, {Vmotor}, {Imotor}, {rpmmotor},{rendmotor}, {fpmotor}"
-            sql_str = f'INSERT INTO motorTable (Modelo, "N° Polos", "P. Nominal (CV)", "P. Mecânica (kW)", "Tensão Nominal (V)", "Corrente Nominal (A)", "Rotação Nominal (RPM)", "Rendimento (%)", "Fator de Potência") VALUES ({str_values})'
+            str_values = f"'{modmotor}', {polmotor}, {pnmotor}, {pnmotorkw}, {Vmotor}, {Imotor}, {rpmmotor},{rendmotor}, {fpmotor}, {addrmotor}"
+            sql_str = f'INSERT INTO motorTable (Modelo, "N° Polos", "P. Nominal (CV)", "P. Mecânica (W)", "Tensão Nominal (V)", "Corrente Nominal (A)", "Rotação Nominal (RPM)", "Rendimento (%)", "Fator de Potência", "AddrModbus") VALUES ({str_values})'
             self._cursor.execute(sql_str)
             self._con.commit()
             #self._con.close()
@@ -336,6 +404,124 @@ class ClienteMODBUS():
         except Exception as e:
             print('Erro ao inserir DBmotor')
             print('\033[31mERRO: ', e.args, '\033[m')
+
+    def inserirDBreadmotor(self, readm, valuet, valuec, potap, valuetemp, motor):
+        """
+        Método para inserção dos dados no DB
+         "P. Mecânica (W)" REAL, "Tensão Nominal (V)" INTEGER, "Tensão Medida (V)" REAL, "Corrente Nominal (A)" REAL, "Corrente Medida (A)" REAL, "Rendimento Motor (%)" REAL, "FP Motor" REAL, "P. Aparente (VA)" REAL, "Temperatura (C°)" REAL, TimeStamp1 TEXT NOT NULL)
+         self.inserirDBreadmotor(readm=readm, pmecmot=pmecmot, tnomot=tnomot, valuet=valuet, inomot=inomot, valuec=round(valuec, 3), rendmot=rendmot, fpmot=fpmot, potap=potap, valuetemp=valuetemp)
+         self.inserirDBreadmotor(readm=readm, valuet=valuet, valuec=round(valuec, 3), potap=potap, valuetemp=valuetemp)
+        """
+        try:
+            date = str(datetime.datetime.fromtimestamp(int(time.time())).strftime("%Y-%m-%d %H:%M:%S"))
+            acrtemp = 0
+            if potap > 4.55:
+                acrtemp =+ 8
+            elif potap > 4.6:
+                acrtemp =+ 10
+            elif potap > 4.7:
+                acrtemp =+ 14
+            elif potap > 4.77:
+                acrtemp =+ 17
+            else:
+                acrtemp = 0
+            pmecmot = float(motor['pnmotor']*735.5)
+            tnomot = motor['Vmotor']
+            inomot = motor['Imotor']
+            rendmot = motor['rendmotor']
+            fpmot = motor['fpmotor']
+            str_values = f"{pmecmot}, {tnomot}, {valuet}, {inomot}, {valuec}, {rendmot}, {fpmot}, {potap}, {valuetemp+acrtemp}, '{date}'"
+            sql_str = f'INSERT INTO motoread{readm}Table ("P. Mecânica (W)", "Tensão Nominal (V)", "Tensão Medida (V)", "Corrente Nominal (A)", "Corrente Medida (A)", "Rendimento Motor (%)", "FP Motor", "P. Aparente (VA)", "Temperatura (C°)", TimeStamp1) VALUES ({str_values})'
+            self._cursor.execute(sql_str)
+            self._con.commit()
+            #self._con.close()
+        except Exception as e:
+            print('Erro ao inserir Leitura do motor no DB')
+            print('\033[31mERRO: ', e.args, '\033[m')
+
+    def lerMotor(self, readm, motores):
+        """
+        Método para leitura FLOAT MODBUS
+        """
+        leng = 5
+        tipo = 3
+        motor = motores[readm-1]
+        addr = motor['addrmotor']
+        i = 0
+        g = 0
+        e1 = []
+        while i < leng:
+            if tipo == 3:
+                i1 = self._cliente.read_holding_registers(addr - 1 + g, 2)
+                tipore = "'F03HR'"  
+                ende = 40000
+            elif tipo == 4:
+                i1 = self._cliente.read_input_registers(addr - 1 + g, 2)
+                tipore = "'F04IR'"
+                ende = 30000
+            else:
+                print('Tipo inválido..')
+            for x in i1:
+                x = bin(x).lstrip("0b")
+                e1.insert(0 + g, x)
+            i += 1
+            g += 2
+        e = 0
+        while e <= leng:
+            e2 = ''
+            for x in e1:
+                e2 = str(f'{e2}{x.rjust(16, "0")} ')
+            e += 1
+        b2 = str(f'{e2}')
+        e3 = b2.split()
+        y = 0
+        while y < len(e3):
+            ieee = f'{e3[0+y]}{e3[1+y]}'
+            sign = int(ieee[0])
+            expo = str(ieee[1:9])
+            expodec = 0
+            expopot = 7
+            for i in range(8):
+                expodec = expodec + (int(expo[i]) * (2**expopot))
+                expopot -= 1
+            mant = str(ieee[9:])
+            mantdec = 0
+            mantpot = -1
+            for i in range(23):
+                mantdec = mantdec + (int(mant[i]) * (2 ** mantpot))
+                mantpot -= 1
+            value = ((-1)**sign)*(1+mantdec)*2**(expodec-127)
+            print(f'{round(value, 3)}')
+            if y == 0:
+                namep = "'Corrente I1 (A)'"
+                valuec1 = round(value, 2)
+            elif y == 2:
+                namep = "'Corrente I2 (A)'"
+                valuec2 = round(value, 2)
+            elif y == 4:
+                namep = "'Corrente I3 (A)'"
+                valuec3 = round(value, 2)
+            elif y == 6:
+                namep = "'Tensão (V)'"
+                valuet = round(value, 2)
+            elif y == 8:
+                namep = "'Temperatura (C°)'"
+                valuetemp = round(value, 1)
+            else:
+                namep = "'-Unknown-'"
+            y += 2
+            self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore,  namep=namep, value=round(value, 2))
+        noaddr = "'- - -'"
+        typecalc = "'CALC.'"
+        medcn = "'Corrente Média Trifásica (A)'"
+        valuec = (valuec1+valuec2+valuec3)/3
+        self.inserirDB(addrs=noaddr, tipo=typecalc, namep=medcn, value=round(valuec, 2))
+        npotap = "'Potência Aparente (VA)'"
+        potap = valuec*1.73205080757*valuet
+        self.inserirDB(addrs=noaddr, tipo=typecalc, namep=npotap, value=round(potap, 2))
+        self.inserirDBenergy(valuec=round(valuec, 3), valuet=valuet, potap=round(potap, 3), valuetemp=valuetemp)
+        self.inserirDBreadmotor(readm=readm, valuet=valuet, valuec=round(valuec, 3), potap=round(potap, 2), valuetemp=valuetemp, motor=motor)
+        return
 
     def lerDado(self, tipo, addr, leng=1):
         """
