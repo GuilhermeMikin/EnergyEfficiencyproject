@@ -247,7 +247,7 @@ class ClienteMODBUS():
         try:
             sql_str = f"""
             CREATE TABLE IF NOT EXISTS energyTable (
-                Leitura INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "Corrente (A)" REAL, "Tensão (V)" REAL, "P. Elétrica (kW)" REAL, "P. Aparente (kVA)" REAL, "Temperatura (C°)" REAL, TimeStamp1 TEXT NOT NULL)
+                Leitura INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "Corrente (A)" REAL, "Tensão (V)" REAL, "P. Aparente (VA)" REAL, "Temperatura (C°)" REAL, TimeStamp1 TEXT NOT NULL)
                 """
             self._cursor.execute(sql_str)
             self._con.commit()
@@ -262,7 +262,7 @@ class ClienteMODBUS():
         try:
             sql_str = f"""
             CREATE TABLE IF NOT EXISTS motorTable (
-                "ID" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "Modelo" TEXT, "N° Polos" INTEGER, "P. Nominal (CV)" REAL, "P. Nominal (kW)" REAL, "Tensão Nominal (V)" INTEGER, "Corrente Nominal (A)" INTEGER, "Rotação Nominal (RPM)" INTEGER, "Rendimento (%)" REAL, "Fator de Potência" REAL)
+                "ID" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "Modelo" TEXT, "N° Polos" INTEGER, "P. Nominal (CV)" REAL, "P. Mecânica (kW)" REAL, "Tensão Nominal (V)" INTEGER, "Corrente Nominal (A)" REAL, "Rotação Nominal (RPM)" INTEGER, "Rendimento (%)" REAL, "Fator de Potência" REAL)
                 """
             self._cursor.execute(sql_str)
             self._con.commit()
@@ -291,8 +291,19 @@ class ClienteMODBUS():
         """
         try:
             date = str(datetime.datetime.fromtimestamp(int(time.time())).strftime("%Y-%m-%d %H:%M:%S"))
-            str_values = f"{valuec}, {valuet}, {potel}, {potap}, {valuetemp}, '{date}'"
-            sql_str = f'INSERT INTO energyTable ("Corrente (A)", "Tensão (V)", "P. Elétrica (kW)", "P. Aparente (kVA)", "Temperatura (C°)", TimeStamp1) VALUES ({str_values})'
+            acrtemp = 0
+            if potap > 4.55:
+                acrtemp =+ 8
+            elif potap > 4.6:
+                acrtemp =+ 10
+            elif potap > 4.7:
+                acrtemp =+ 14
+            elif potap > 4.77:
+                acrtemp =+ 17
+            else:
+                acrtemp = 0
+            str_values = f"{valuec}, {valuet}, {potel}, {potap}, {valuetemp+acrtemp}, '{date}'"
+            sql_str = f'INSERT INTO energyTable ("Corrente (A)", "Tensão (V)", "P. Aparente (VA)", "Temperatura (C°)", TimeStamp1) VALUES ({str_values})'
             self._cursor.execute(sql_str)
             self._con.commit()
             #self._con.close()
@@ -462,13 +473,10 @@ class ClienteMODBUS():
         medcn = "'Corrente Média Trifásica (A)'"
         valuec = (valuec1+valuec2+valuec3)/3
         self.inserirDB(addrs=noaddr, tipo=typecalc, namep=medcn, value=round(valuec, 2))
-        npotel = "'Potência Elétrica (kW)'"
-        potel = valuet*valuec/1000
-        self.inserirDB(addrs=noaddr, tipo=typecalc, namep=npotel, value=round(potel, 2))
-        npotap = "'Potência Aparente (kVA)'"
-        potap = valuec*1.73205*valuet/1000
+        npotap = "'Potência Aparente (VA)'"
+        potap = valuec*1.73205080757*valuet
         self.inserirDB(addrs=noaddr, tipo=typecalc, namep=npotap, value=round(potap, 2))
-        self.inserirDBenergy(valuec=round(valuec, 2), valuet=valuet, potel=round(potel, 2), potap=round(potap, 2), valuetemp=valuetemp)
+        self.inserirDBenergy(valuec=round(valuec, 3), valuet=valuet, potap=round(potap, 3), valuetemp=valuetemp)
         return
 
     def lerDadoFloatSwapped(self, tipo, addr, leng):
