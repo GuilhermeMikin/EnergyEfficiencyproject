@@ -46,11 +46,11 @@ class ClienteMODBUS():
                 print('-' * 34)
                 print('Cliente Mosbus'.center(34))
                 print('-' * 34)
-                # sel = input("Qual serviço? \n1- Leitura \n2- Escrita \n3- Configuração de leitura \n4- Cadastrar Motor \n5- Sair \nServiço: ")
                 sel = input("Qual serviço? \n1- Leitura Modbus \n2- Escrita Modbus \n3- Configuração de leitura \n4- Cadastrar Motor \n5- Leitura Motor \n6- Sair \nServiço: ")
                 if sel == '1':
                     self.createTable()
                     self.createTableenergy()
+                    self.createTableModbus()
                     print('\nQual tipo de dado deseja ler?')
                     print("1- Coil Status \n2- Input Status \n3- Holding Register \n4- Input Register")
                     while True:
@@ -292,9 +292,23 @@ class ClienteMODBUS():
         except Exception as e:
             print('\033[31mERRO: ', e.args, '\033[m')
 
+    def createTableModbus(self):
+        """
+        Método que cria a tabela para armazenamento de dados lidos pelo cliente Modbus
+        """
+        try:
+            sql_str = f"""
+            CREATE TABLE IF NOT EXISTS modbusValues (
+                ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, Addr TEXT, Type TEXT, Value REAL, TimeStamp1 TEXT NOT NULL)
+                """
+            self._cursor.execute(sql_str)
+            self._con.commit()
+        except Exception as e:
+            print('\033[31mERRO: ', e.args, '\033[m')
+    
     def createTable(self):
         """
-        Método que cria a tabela para armazenamento dos dados, caso ela não exista
+        Método que cria a tabela para armazenamento dos dados, com nomes simulados de parâmetros lidos
         """
         try:
             sql_str = f"""
@@ -337,7 +351,6 @@ class ClienteMODBUS():
             print('Erro ao criar tabelo motor!')
             print('\033[31mERRO: ', e.args, '\033[m')
 
-    
     def readArq(self):
         try:
             dados_motor_arq = dict()
@@ -382,7 +395,7 @@ class ClienteMODBUS():
 
     def createTableReadMotor(self, readm):
         """
-        Método que cria a tabela para leitura de motores)
+        Método que cria a tabela para leitura de motores
         
         """
         try:
@@ -394,6 +407,20 @@ class ClienteMODBUS():
             self._con.commit()
         except Exception as e:
             print('Erro ao criar tabelo motor!')
+            print('\033[31mERRO: ', e.args, '\033[m')
+    
+    def inserirDBModbus(self, addrs, tipo, value):
+        """
+        Método para inserção dos dados lidos do servidor Modbus no DB
+        """
+        try:
+            date = str(datetime.datetime.fromtimestamp(int(time.time())).strftime("%Y-%m-%d %H:%M:%S"))
+            str_values = f"{addrs}, {tipo}, {value}, '{date}'"
+            sql_str = f'INSERT INTO modbusValues (Addr, Type, Value, TimeStamp1) VALUES ({str_values})'
+            self._cursor.execute(sql_str)
+            self._con.commit()
+            #self._con.close()
+        except Exception as e:
             print('\033[31mERRO: ', e.args, '\033[m')
     
     def inserirDB(self, addrs, tipo, namep, value):
@@ -439,7 +466,7 @@ class ClienteMODBUS():
     def inserirDBMotor(self,modmotor='W22',polmotor=6,pnmotor=5,Vmotor=380,Imotor=6.9,rpmmotor=1200,rendmotor=92.4,fpmotor=0.94,addrmotor=1):
         """
         Método para inserção dos dados do motor no DB
-            modmotor = str(input('\nModelo do motor: '))
+            modmotor = str(input('Modelo do motor: '))
             polmotor = str(input('N° Polos: '))
             pnmotor = float(input('Potência nominal (CV): '))
             Vmotor = float(input('Tensão nominal (V): '))
@@ -472,22 +499,56 @@ class ClienteMODBUS():
 
     def inserirDBreadmotor(self, readm, valuet, valuec, potap, valuetemp, motor):
         """
-        Método para inserção dos dados no DB
-         "P. Mecânica (W)" REAL, "Tensão Nominal (V)" INTEGER, "Tensão Medida (V)" REAL, "Corrente Nominal (A)" REAL, "Corrente Medida (A)" REAL, "Rendimento Motor (%)" REAL, "FP Motor" REAL, "P. Aparente (VA)" REAL, "Temperatura (C°)" REAL, TimeStamp1 TEXT NOT NULL)
-         self.inserirDBreadmotor(readm=readm, pmecmot=pmecmot, tnomot=tnomot, valuet=valuet, inomot=inomot, valuec=round(valuec, 3), rendmot=rendmot, fpmot=fpmot, potap=potap, valuetemp=valuetemp)
-         self.inserirDBreadmotor(readm=readm, valuet=valuet, valuec=round(valuec, 3), potap=potap, valuetemp=valuetemp)
+        Método para inserção das leituras dos motores no DB
+        Com função para aumentar a temp de acordo com a potência calculada
         """
         try:
             date = str(datetime.datetime.fromtimestamp(int(time.time())).strftime("%Y-%m-%d %H:%M:%S"))
             acrtemp = 0
-            if potap > 4.55:
-                acrtemp =+ 8
-            elif potap > 4.6:
-                acrtemp =+ 10
-            elif potap > 4.7:
-                acrtemp =+ 14
-            elif potap > 4.77:
-                acrtemp =+ 17
+            if potap > 4000:
+                if potap > 4390:
+                    acrtemp =+ 8
+                elif potap > 4420:
+                    acrtemp =+ 10
+                elif potap > 4450:
+                    acrtemp =+ 14
+                elif potap > 4500:
+                    acrtemp =+ 17
+                else:
+                    acrtemp = 0
+            elif potap > 6000:
+                if potap > 6190:
+                    acrtemp =+ 8
+                elif potap > 6200:
+                    acrtemp =+ 10
+                elif potap > 6220:
+                    acrtemp =+ 14
+                elif potap > 6260:
+                    acrtemp =+ 17
+                else:
+                    acrtemp = 0
+            elif potap > 8000:
+                if potap > 8750:
+                    acrtemp =+ 8
+                elif potap > 8790:
+                    acrtemp =+ 10
+                elif potap > 8800:
+                    acrtemp =+ 14
+                elif potap > 8820:
+                    acrtemp =+ 17
+                else:
+                    acrtemp = 0
+            elif potap > 10000:
+                if potap > 10450:
+                    acrtemp =+ 8
+                elif potap > 10550:
+                    acrtemp =+ 10
+                elif potap > 10600:
+                    acrtemp =+ 14
+                elif potap > 10650:
+                    acrtemp =+ 17
+                else:
+                    acrtemp = 0
             else:
                 acrtemp = 0
             pmecmot = float(float(motor['pnmotor'])*735.5)
@@ -508,7 +569,7 @@ class ClienteMODBUS():
 
     def lerMotor(self, readm, motores):
         """
-        Método para leitura FLOAT MODBUS
+        Método para leitura FLOAT MODBUS dos motores cadastrados
         """
         leng = 5
         tipo = 3
@@ -608,7 +669,8 @@ class ClienteMODBUS():
                         value = 1
                     else:
                         value = 0
-                    self.inserirDB(addrs=(addr+ic-1), tipo="'F01CS'", namep="'ON/OFF'", value=value)
+                    # self.inserirDB(addrs=(addr+ic-1), tipo="'F01CS'", namep="'ON/OFF'", value=value)
+                    self.inserirDBModbus(addrs=(addr+ic-1), tipo="'F01CS'", value=value)
             return 
 
         elif tipo == 2:
@@ -621,7 +683,8 @@ class ClienteMODBUS():
                     value = di[0 + idi]
                     idi += 1
                     print(value)
-                    self.inserirDB(addrs=(10000+addr+idi-1), tipo="'F02IS'", namep="'ON/OFF'",value=value)
+                    # self.inserirDB(addrs=(10000+addr+idi-1), tipo="'F02IS'", namep="'ON/OFF'",value=value)
+                    self.inserirDBModbus(addrs=(10000+addr+idi-1), tipo="'F02IS'", value=value)
             return 
 
         elif tipo == 3:
@@ -634,7 +697,8 @@ class ClienteMODBUS():
                     value = hr[0+ihr]
                     ihr += 1
                     print(value)
-                    self.inserirDB(addrs=(40000+addr+ihr-1), tipo="'F03HR'", namep="'Temperatura (C)'", value=value)
+                    # self.inserirDB(addrs=(40000+addr+ihr-1), tipo="'F03HR'", namep="'Temperatura (C)'", value=value)
+                    self.inserirDBModbus(addrs=(40000+addr+ihr-1), tipo="'F03HR'", value=value)
             return 
 
         elif tipo == 4:
@@ -647,7 +711,8 @@ class ClienteMODBUS():
                     value = ir[0 + iir]
                     iir += 1
                     print(value)
-                    self.inserirDB(addrs=(30000+addr+iir-1), tipo="'F04IR'",  namep="'Total Product'", value=value)
+                    # self.inserirDB(addrs=(30000+addr+iir-1), tipo="'F04IR'",  namep="'Total Product'", value=value)
+                    self.inserirDBModbus(addrs=(30000+addr+iir-1), tipo="'F04IR'", value=value)
             return 
 
         else:
@@ -720,16 +785,17 @@ class ClienteMODBUS():
             else:
                 namep = "'-Unknown-'"
             y += 2
-            self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore,  namep=namep, value=round(value, 2))
-        noaddr = "'- - -'"
-        typecalc = "'CALC.'"
-        medcn = "'Corrente Média Trifásica (A)'"
-        valuec = (valuec1+valuec2+valuec3)/3
-        self.inserirDB(addrs=noaddr, tipo=typecalc, namep=medcn, value=round(valuec, 2))
-        npotap = "'Potência Aparente (VA)'"
-        potap = valuec*1.73205080757*valuet
-        self.inserirDB(addrs=noaddr, tipo=typecalc, namep=npotap, value=round(potap, 2))
-        self.inserirDBenergy(valuec=round(valuec, 3), valuet=valuet, potap=round(potap, 3), valuetemp=valuetemp)
+            # self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore,  namep=namep, value=round(value, 2))
+            self.inserirDBModbus(addrs=(ende+addr+y-2), tipo=tipore, value=value)
+        # noaddr = "'- - -'"
+        # typecalc = "'CALC.'"
+        # medcn = "'Corrente Média Trifásica (A)'"
+        # valuec = (valuec1+valuec2+valuec3)/3
+        # self.inserirDB(addrs=noaddr, tipo=typecalc, namep=medcn, value=round(valuec, 2))
+        # npotap = "'Potência Aparente (VA)'"
+        # potap = valuec*1.73205080757*valuet
+        # self.inserirDB(addrs=noaddr, tipo=typecalc, namep=npotap, value=round(potap, 2))
+        # self.inserirDBenergy(valuec=round(valuec, 3), valuet=valuet, potap=round(potap, 3), valuetemp=valuetemp)
         return
 
     def lerDadoFloatSwapped(self, tipo, addr, leng):
@@ -800,16 +866,17 @@ class ClienteMODBUS():
             else:
                 namep = "'-Unknown-'"
             y += 2
-            self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore,  namep=namep, value=round(value, 2))
-        noaddr = "'- - -'"
-        typecalc = "'CALC.'"
-        medcn = "'Corrente Média Trifásica (A)'"
-        valuec = (valuec1+valuec2+valuec3)/3
-        self.inserirDB(addrs=noaddr, tipo=typecalc, namep=medcn, value=round(valuec, 2))
-        npotap = "'Potência Aparente (VA)'"
-        potap = valuec*1.73205080757*valuet
-        self.inserirDB(addrs=noaddr, tipo=typecalc, namep=npotap, value=round(potap, 2))
-        self.inserirDBenergy(valuec=round(valuec, 3), valuet=valuet, potap=round(potap, 3), valuetemp=valuetemp)    
+            # self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore,  namep=namep, value=round(value, 2))
+            self.inserirDBModbus(addrs=(ende+addr+y-2), tipo=tipore, value=value)
+        # noaddr = "'- - -'"
+        # typecalc = "'CALC.'"
+        # medcn = "'Corrente Média Trifásica (A)'"
+        # valuec = (valuec1+valuec2+valuec3)/3
+        # self.inserirDB(addrs=noaddr, tipo=typecalc, namep=medcn, value=round(valuec, 2))
+        # npotap = "'Potência Aparente (VA)'"
+        # potap = valuec*1.73205080757*valuet
+        # self.inserirDB(addrs=noaddr, tipo=typecalc, namep=npotap, value=round(potap, 2))
+        # self.inserirDBenergy(valuec=round(valuec, 3), valuet=valuet, potap=round(potap, 3), valuetemp=valuetemp)    
         return
 
 
@@ -831,15 +898,3 @@ class ClienteMODBUS():
             print('\033[31mERRO: ', e.args, '\033[m')
 
     
-    # def readDB(self):
-    #     """
-    #     Método para inserção dos dados no DB
-    #     """
-    #     try:
-    #         self.createTable()
-    #         sql_str = f'SELECT * FROM pointValues'
-    #         self._cursor.execute(sql_str)
-    #         self._con.commit()
-    #         #self._con.close()
-    #     except Exception as e:
-    #         print('\033[31mERRO: ', e.args, '\033[m')
