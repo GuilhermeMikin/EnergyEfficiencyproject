@@ -78,7 +78,7 @@ class ClienteMODBUS():
                             sleep(1)
                             for i in range(0, int(nvezes)):
                                 print(f'\033[33mLeitura {i + 1}:\033[m')
-                                self.lerDado(int(tipo), int(addr), leng)
+                                self.lerDado(int(i + 1), int(tipo), int(addr), leng)
                                 sleep(self._scan_time)
                             print('\nValores lidos e inseridos no DB com sucesso!!\n')
                             sleep(0.8)
@@ -91,7 +91,8 @@ class ClienteMODBUS():
                             sleep(1)
                             for i in range(0, int(nvezes)):
                                 print(f'\033[33mLeitura {i + 1}:\033[m')
-                                self.lerDadoFloat(int(tipo), int(addr), leng)
+                                stamp = (int(i) + 1)
+                                self.lerDadoFloat(int(stamp), int(tipo), int(addr), leng)
                                 sleep(self._scan_time)
                             print('\nValores lidos e inseridos no DB com sucesso!!\n')
                             sleep(0.8)
@@ -104,7 +105,8 @@ class ClienteMODBUS():
                             sleep(1)
                             for i in range(0, int(nvezes)):
                                 print(f'\033[33mLeitura {i + 1}:\033[m')
-                                self.lerDadoFloatSwapped(int(tipo), int(addr), leng)
+                                stamp = (int(i) + 1)
+                                self.lerDadoFloatSwapped(int(stamp), int(tipo), int(addr), leng)
                                 sleep(self._scan_time)
                             print('\nValores lidos e inseridos no DB com sucesso!!\n')
                             sleep(0.8)
@@ -131,7 +133,7 @@ class ClienteMODBUS():
                             sleep(1)
                             for i in range(0, int(nvezes)):
                                 print(f'\033[33mLeitura {i + 1}:\033[m')
-                                self.lerDado(int(tipo), int(addr), leng)
+                                self.lerDado(int(i + 1), int(tipo), int(addr), leng)
                                 sleep(self._scan_time)
                             print('\nValores lidos e inseridos no DB com sucesso!!\n')
                             sleep(0.8)
@@ -144,7 +146,8 @@ class ClienteMODBUS():
                             sleep(1)
                             for i in range(0, int(nvezes)):
                                 print(f'\033[33mLeitura {i + 1}:\033[m')
-                                self.lerDadoFloat(int(tipo), int(addr), leng)
+                                stamp = (int(i) + 1)
+                                self.lerDadoFloat(int(stamp), int(tipo), int(addr), leng)
                                 sleep(self._scan_time)
                             print('\nValores lidos e inseridos no DB com sucesso!!\n')
                             sleep(0.8)
@@ -157,7 +160,8 @@ class ClienteMODBUS():
                             sleep(1)
                             for i in range(0, int(nvezes)):
                                 print(f'\033[33mLeitura {i + 1}:\033[m')
-                                self.lerDadoFloatSwapped(int(tipo), int(addr), leng)
+                                stamp = (int(i) + 1)
+                                self.lerDadoFloatSwapped(int(stamp), int(tipo), int(addr), leng)
                                 sleep(self._scan_time)
                             print('\nValores lidos e inseridos no DB com sucesso!!\n')
                             sleep(0.8)
@@ -175,7 +179,7 @@ class ClienteMODBUS():
                         sleep(1)
                         for i in range(0, int(nvezes)):
                             print(f'\033[33mLeitura {i + 1}:\033[m')
-                            self.lerDado(int(tipo), int(addr), leng)
+                            self.lerDado(int(i + 1), int(tipo), int(addr), leng)
                             sleep(self._scan_time)
                         print('\nValores lidos e inseridos no DB com sucesso!!\n')
                         sleep(0.8)
@@ -299,7 +303,7 @@ class ClienteMODBUS():
         try:
             sql_str = f"""
             CREATE TABLE IF NOT EXISTS modbusValues (
-                ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, Addr TEXT, Type TEXT, Value REAL, TimeStamp1 TEXT NOT NULL)
+                ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, Stamp INTEGER, Addr TEXT, Type TEXT, Value REAL, TimeStamp1 TEXT NOT NULL)
                 """
             self._cursor.execute(sql_str)
             self._con.commit()
@@ -409,14 +413,14 @@ class ClienteMODBUS():
             print('Erro ao criar tabelo motor!')
             print('\033[31mERRO: ', e.args, '\033[m')
     
-    def inserirDBModbus(self, addrs, tipo, value):
+    def inserirDBModbus(self, stamp, addrs, tipo, value):
         """
         Método para inserção dos dados lidos do servidor Modbus no DB
         """
         try:
             date = str(datetime.datetime.fromtimestamp(int(time.time())).strftime("%Y-%m-%d %H:%M:%S"))
-            str_values = f"{addrs}, {tipo}, {value}, '{date}'"
-            sql_str = f'INSERT INTO modbusValues (Addr, Type, Value, TimeStamp1) VALUES ({str_values})'
+            str_values = f"{stamp}, {addrs}, {tipo}, {value}, '{date}'"
+            sql_str = f'INSERT INTO modbusValues (Stamp, Addr, Type, Value, TimeStamp1) VALUES ({str_values})'
             self._cursor.execute(sql_str)
             self._con.commit()
             #self._con.close()
@@ -651,7 +655,7 @@ class ClienteMODBUS():
         self.inserirDBreadmotor(readm=readm, valuet=valuet, valuec=round(valuec, 3), potap=round(potap, 2), valuetemp=valuetemp, motor=motor)
         return
 
-    def lerDado(self, tipo, addr, leng=1):
+    def lerDado(self, stamp, tipo, addr, leng=1):
         """
         Método para leitura MODBUS
         """
@@ -670,7 +674,7 @@ class ClienteMODBUS():
                     else:
                         value = 0
                     # self.inserirDB(addrs=(addr+ic-1), tipo="'F01CS'", namep="'ON/OFF'", value=value)
-                    self.inserirDBModbus(addrs=(addr+ic-1), tipo="'F01CS'", value=value)
+                    self.inserirDBModbus(stamp=stamp, addrs=(addr+ic-1), tipo="'F01-CoilStatus'", value=value)
             return 
 
         elif tipo == 2:
@@ -684,7 +688,7 @@ class ClienteMODBUS():
                     idi += 1
                     print(value)
                     # self.inserirDB(addrs=(10000+addr+idi-1), tipo="'F02IS'", namep="'ON/OFF'",value=value)
-                    self.inserirDBModbus(addrs=(10000+addr+idi-1), tipo="'F02IS'", value=value)
+                    self.inserirDBModbus(stamp=stamp, addrs=(10000+addr+idi-1), tipo="'F02-InputStatus'", value=value)
             return 
 
         elif tipo == 3:
@@ -698,7 +702,7 @@ class ClienteMODBUS():
                     ihr += 1
                     print(value)
                     # self.inserirDB(addrs=(40000+addr+ihr-1), tipo="'F03HR'", namep="'Temperatura (C)'", value=value)
-                    self.inserirDBModbus(addrs=(40000+addr+ihr-1), tipo="'F03HR'", value=value)
+                    self.inserirDBModbus(stamp=stamp, addrs=(40000+addr+ihr-1), tipo="'F03-HoldingRegister'", value=value)
             return 
 
         elif tipo == 4:
@@ -712,13 +716,13 @@ class ClienteMODBUS():
                     iir += 1
                     print(value)
                     # self.inserirDB(addrs=(30000+addr+iir-1), tipo="'F04IR'",  namep="'Total Product'", value=value)
-                    self.inserirDBModbus(addrs=(30000+addr+iir-1), tipo="'F04IR'", value=value)
+                    self.inserirDBModbus(stamp=stamp, addrs=(30000+addr+iir-1), tipo="'F04-InputRegister'", value=value)
             return 
 
         else:
             print('Tipo de leitura inválido..')
 
-    def lerDadoFloat(self, tipo, addr, leng):
+    def lerDadoFloat(self, stamp, tipo, addr, leng):
         """
         Método para leitura FLOAT MODBUS
         """
@@ -728,11 +732,11 @@ class ClienteMODBUS():
         while i < leng:
             if tipo == 3:
                 i1 = self._cliente.read_holding_registers(addr - 1 + g, 2)
-                tipore = "'F03HR'"  
+                tipore = "'F03-HoldingRegister-FP'"  
                 ende = 40000
             elif tipo == 4:
                 i1 = self._cliente.read_input_registers(addr - 1 + g, 2)
-                tipore = "'F04IR'"
+                tipore = "'F04-InputRegister-FP'"
                 ende = 30000
             else:
                 print('Tipo inválido..')
@@ -786,7 +790,7 @@ class ClienteMODBUS():
                 namep = "'-Unknown-'"
             y += 2
             # self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore,  namep=namep, value=round(value, 2))
-            self.inserirDBModbus(addrs=(ende+addr+y-2), tipo=tipore, value=value)
+            self.inserirDBModbus(stamp=stamp, addrs=(ende+addr+y-2), tipo=tipore, value=value)
         # noaddr = "'- - -'"
         # typecalc = "'CALC.'"
         # medcn = "'Corrente Média Trifásica (A)'"
@@ -798,7 +802,7 @@ class ClienteMODBUS():
         # self.inserirDBenergy(valuec=round(valuec, 3), valuet=valuet, potap=round(potap, 3), valuetemp=valuetemp)
         return
 
-    def lerDadoFloatSwapped(self, tipo, addr, leng):
+    def lerDadoFloatSwapped(self, stamp, tipo, addr, leng):
         """
         Método para leitura FLOAT SWAPPED MODBUS
         """
@@ -808,11 +812,11 @@ class ClienteMODBUS():
         while i < leng:
             if tipo == 3:
                 i1 = self._cliente.read_holding_registers(addr - 1 + g, 2)
-                tipore = "'F03HR'"
+                tipore = "'F03-HoldingRegister-FS'"
                 ende = 40000
             elif tipo == 4:
                 i1 = self._cliente.read_input_registers(addr - 1 + g, 2)
-                tipore = "'F04IR'"
+                tipore = "'F04-InputRegister-FS'"
                 ende = 30000
             else:
                 print('Tipo inválido..')
@@ -867,7 +871,7 @@ class ClienteMODBUS():
                 namep = "'-Unknown-'"
             y += 2
             # self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore,  namep=namep, value=round(value, 2))
-            self.inserirDBModbus(addrs=(ende+addr+y-2), tipo=tipore, value=value)
+            self.inserirDBModbus(stamp=stamp, addrs=(ende+addr+y-2), tipo=tipore, value=value)
         # noaddr = "'- - -'"
         # typecalc = "'CALC.'"
         # medcn = "'Corrente Média Trifásica (A)'"
@@ -880,16 +884,18 @@ class ClienteMODBUS():
         return
 
 
-    def escreveDado(self, tipo, addr, valor):
+    def escreveDado(self, stamp, tipo, addr, valor):
         """
         Método para escrita MODBUS
         """
         try:
             if tipo == 1:
                 print(f'\033[33mValor {valor} escrito no endereço {addr}\033[m\n')
+                self.inserirDBModbus(stamp=0, addrs=addr, tipo='F01-CS-Input', value=valor)
                 return self._cliente.write_single_coil(addr - 1, valor)
             elif tipo == 2:
                 print(f'\033[33mValor {valor} escrito no endereço {addr}\033[m\n')
+                self.inserirDBModbus(stamp=0, addrs=addr, tipo='F03-HR-Input', value=valor)
                 return self._cliente.write_single_register(addr - 1, valor)
             else:
                 print('Tipo de escrita inválido..\n')
