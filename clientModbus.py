@@ -36,7 +36,7 @@ class ClienteMODBUS():
         """
         try:
             self._cliente.open()
-            print('\n\033[33mCliente conectado..\033[m\n')
+            print('\n\033[33m --> Cliente Modbus conectado..\033[m\n')
 
         except Exception as e:
             print('\033[31mERRO: ', e.args, '\033[m')
@@ -44,7 +44,7 @@ class ClienteMODBUS():
             atendimento = True
             while atendimento:
                 print('-' * 34)
-                print('Cliente Mosbus'.center(34))
+                print('Sistema de Monitoramento'.center(34))
                 print('-' * 34)
                 sel = input("Qual serviço? \n1- Leitura Modbus \n2- Escrita Modbus \n3- Configuração de leitura \n4- Cadastrar Motor \n5- Leitura Motor \n6- Sair \nServiço: ")
                 if sel == '1':

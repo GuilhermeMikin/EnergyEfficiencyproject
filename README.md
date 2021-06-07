@@ -2,7 +2,6 @@
  Um cliente Modbus com pyModbusTCP.
  - Com banco de dados SQLite
  
-- Dando nomes a algumas variáveis simuladas para início de monitoramento de eficiência energética...
 
 Reading modbus displays:
 
@@ -10,68 +9,22 @@ Reading modbus displays:
  - Floating Point;
  - Float (Swapped);
 
+Demonstração do menu inicial:
+
+ --> Cliente Modbus conectado..
 
 ----------------------------------
-          Cliente Mosbus
-----------------------------------
-Qual serviço?
-
- 1- Leitura
- 2- Escrita
- 3- Configuração
- 4- Sair
- 
-Serviço: 1
-
-Qual tipo de dado deseja ler?
-
- 1- Coil Status
- 2- Input Status
- 3- Holding Register
- 4- Input Register
- 
-Type: 3
-
- 1- Decimal
- 2- Floating Point
- 3- Float Swapped
- 
-Leitura: 3
-
- Address: 1
- Length: 4
- Quantidade de leituras: 1
-
-Começando leitura FLOAT..
-
-Leitura 1:
-  360.28
-  10.1
-  -13.5
-  0.0
-
-Fim de leitura FLOAT..
-
-----------------------------------
-          Cliente Mosbus
+     Sistema de Monitoramento
 ----------------------------------
 Qual serviço?
 
- 1- Leitura
- 2- Escrita
- 3- Configuração
- 4- Sair
- 
-Serviço: 2
+1- Leitura Modbus
+2- Escrita Modbus
+3- Configuração de leitura
+4- Cadastrar Motor
+5- Leitura Motor
+6- Sair
 
-Qual tipo de dado deseja escrever?
+Serviço: 6
 
- 1- Coil Status
- 2- Holding Register
- 
-Tipo: 2
- Digite o endereço: 106
- Digite o valor que deseja escrever: 6666
-
-Escrevendo..
- Valor 6666 escrito no endereço 106
+Fechando sistema..
