@@ -61,7 +61,7 @@ class ClienteMODBUS():
                         else:
                             break
 
-                    if tipo == 3: #holding register
+                    if tipo == 3 or tipo == 4: 
                         while True:
                             val = int(input("\n1- Decimal \n2- Floating Point \n3- Float Swapped \nLeitura: "))
                             if val > 3:
@@ -70,73 +70,39 @@ class ClienteMODBUS():
                             else:
                                 break
 
-                        if val == 1: #valores INTEGER
+                        if val == 1: #valores INTEGER stamp = (i+1) self.lerDado(int(stamp), int(tipo), int(addr), leng)
                             addr = input(f'\nAddress: ')
                             leng = int(input(f'Length: '))
                             nvezes = input('Quantidade de leituras: ')
                             print('\nComeçando leitura Decimal..\n')
                             sleep(1)
-                            for i in range(0, int(nvezes)):
-                                print(f'\033[33mLeitura {i + 1}:\033[m')
-                                self.lerDado(int(i + 1), int(tipo), int(addr), leng)
-                                sleep(self._scan_time)
-                            print('\nValores lidos e inseridos no DB com sucesso!!\n')
-                            sleep(0.8)
-
-                        elif val == 2: #valores FLOAT
-                            addr = input(f'\nAddress: ')
-                            leng = int(input(f'Length: '))
-                            nvezes = input('Quantidade de leituras: ')
-                            print('\nComeçando leitura FLOAT..\n')
-                            sleep(1)
-                            for i in range(0, int(nvezes)):
-                                print(f'\033[33mLeitura {i + 1}:\033[m')
-                                stamp = (int(i) + 1)
-                                self.lerDadoFloat(int(stamp), int(tipo), int(addr), leng)
-                                sleep(self._scan_time)
-                            print('\nValores lidos e inseridos no DB com sucesso!!\n')
-                            sleep(0.8)
-
-                        elif val == 3: #valores FLOAT SWAPPED 
-                            addr = input(f'\nAddress: ')
-                            leng = int(input(f'Length: '))
-                            nvezes = input('Quantidade de leituras: ')
-                            print('\nComeçando leitura FLOAT SWAPPED..\n')
-                            sleep(1)
-                            for i in range(0, int(nvezes)):
-                                print(f'\033[33mLeitura {i + 1}:\033[m')
-                                stamp = (int(i) + 1)
-                                self.lerDadoFloatSwapped(int(stamp), int(tipo), int(addr), leng)
-                                sleep(self._scan_time)
-                            print('\nValores lidos e inseridos no DB com sucesso!!\n')
-                            sleep(0.8)
-
-                        else:
-                            sleep(0.3)
-                            print('\033[31mSeleção inválida..\033[m\n')
-                            sleep(0.7)
-
-                    elif tipo == 4: #Input register
-                        while True:
-                            val = int(input("\n1- Decimal \n2- Floating Point \n3- Float Swapped \nLeitura: "))
-                            if val > 3:
-                                print('\033[31mDigite um tipo válido..\033[m')
+                            try:
+                                for i in range(0, int(nvezes)):
+                                    print(f'\033[33mLeitura {i + 1}:\033[m')
+                                    stamp = (i+1)
+                                    self.lerDado(int(stamp), int(tipo), int(addr), leng)
+                                    sleep(self._scan_time)
+                                print('\nValores lidos e inseridos no DB com sucesso!!\n')
                                 sleep(0.8)
-                            else:
-                                break
-
-                        if val == 1: #valores INTEGER
-                            addr = input(f'\nAddress: ')
-                            leng = int(input(f'Length: '))
-                            nvezes = input('Quantidade de leituras: ')
-                            print('\nComeçando leitura Decimal..\n')
-                            sleep(1)
-                            for i in range(0, int(nvezes)):
-                                print(f'\033[33mLeitura {i + 1}:\033[m')
-                                self.lerDado(int(i + 1), int(tipo), int(addr), leng)
-                                sleep(self._scan_time)
-                            print('\nValores lidos e inseridos no DB com sucesso!!\n')
-                            sleep(0.8)
+                            except Exception as e:
+                                print('\033[31mERRO: ', e.args, '\033[m')
+                                try:
+                                    sleep(0.5)
+                                    print('\033[33m\nSegunda tentativa..\033[m')
+                                    if not self._cliente.is_open():
+                                        self._cliente.open()
+                                    sleep(2)
+                                    for i in range(0, int(nvezes)):
+                                        print(f'\033[33mLeitura {i + 1}:\033[m')
+                                        stamp = (i+1)
+                                        self.lerDado(int(stamp), int(tipo), int(addr), leng)
+                                        sleep(self._scan_time)
+                                    print('\nValores lidos e inseridos no DB com sucesso!!\n')
+                                    sleep(0.8)
+                                except Exception as e:
+                                    print('\033[31mERRO: ', e.args, '\033[m')
+                                    print('\nO Cliente não conseguiu receber uma resposta.. \nVoltando ao menu..\n\n')
+                                    sleep(1.5)
 
                         elif val == 2: #valores FLOAT
                             addr = input(f'\nAddress: ')
@@ -144,13 +110,33 @@ class ClienteMODBUS():
                             nvezes = input('Quantidade de leituras: ')
                             print('\nComeçando leitura FLOAT..\n')
                             sleep(1)
-                            for i in range(0, int(nvezes)):
-                                print(f'\033[33mLeitura {i + 1}:\033[m')
-                                stamp = (int(i) + 1)
-                                self.lerDadoFloat(int(stamp), int(tipo), int(addr), leng)
-                                sleep(self._scan_time)
-                            print('\nValores lidos e inseridos no DB com sucesso!!\n')
-                            sleep(0.8)
+                            try:
+                                for i in range(0, int(nvezes)):
+                                    print(f'\033[33mLeitura {i + 1}:\033[m')
+                                    stamp = (i+1)
+                                    self.lerDadoFloat(int(stamp), int(tipo), int(addr), leng)
+                                    sleep(self._scan_time)
+                                print('\nValores lidos e inseridos no DB com sucesso!!\n')
+                                sleep(0.8)
+                            except Exception as e:
+                                print('\033[31mERRO: ', e.args, '\033[m')
+                                try:
+                                    sleep(0.5)
+                                    print('\033[33m\nSegunda tentativa..\033[m')
+                                    if not self._cliente.is_open():
+                                        self._cliente.open()
+                                    sleep(2)
+                                    for i in range(0, int(nvezes)):
+                                        print(f'\033[33mLeitura {i + 1}:\033[m')
+                                        stamp = (i+1)
+                                        self.lerDadoFloat(int(stamp), int(tipo), int(addr), leng)
+                                        sleep(self._scan_time)
+                                    print('\nValores lidos e inseridos no DB com sucesso!!\n')
+                                    sleep(0.8)
+                                except Exception as e:
+                                    print('\033[31mERRO: ', e.args, '\033[m')
+                                    print('\nO Cliente não conseguiu receber uma resposta.. \nVoltando ao menu..\n\n')
+                                    sleep(1.5)
 
                         elif val == 3: #valores FLOAT SWAPPED 
                             addr = input(f'\nAddress: ')
@@ -158,13 +144,33 @@ class ClienteMODBUS():
                             nvezes = input('Quantidade de leituras: ')
                             print('\nComeçando leitura FLOAT SWAPPED..\n')
                             sleep(1)
-                            for i in range(0, int(nvezes)):
-                                print(f'\033[33mLeitura {i + 1}:\033[m')
-                                stamp = (int(i) + 1)
-                                self.lerDadoFloatSwapped(int(stamp), int(tipo), int(addr), leng)
-                                sleep(self._scan_time)
-                            print('\nValores lidos e inseridos no DB com sucesso!!\n')
-                            sleep(0.8)
+                            try:
+                                for i in range(0, int(nvezes)):
+                                    print(f'\033[33mLeitura {i + 1}:\033[m')
+                                    stamp = (i+1)
+                                    self.lerDadoFloatSwapped(int(stamp), int(tipo), int(addr), leng)
+                                    sleep(self._scan_time)
+                                print('\nValores lidos e inseridos no DB com sucesso!!\n')
+                                sleep(0.8)
+                            except Exception as e:
+                                print('\033[31mERRO: ', e.args, '\033[m')
+                                try:
+                                    sleep(0.5)
+                                    print('\033[33m\nSegunda tentativa..\033[m')
+                                    if not self._cliente.is_open():
+                                        self._cliente.open()
+                                    sleep(2)
+                                    for i in range(0, int(nvezes)):
+                                        print(f'\033[33mLeitura {i + 1}:\033[m')
+                                        stamp = (i+1)
+                                        self.lerDadoFloatSwapped(int(stamp), int(tipo), int(addr), leng)
+                                        sleep(self._scan_time)
+                                    print('\nValores lidos e inseridos no DB com sucesso!!\n')
+                                    sleep(0.8)
+                                except Exception as e:
+                                    print('\033[31mERRO: ', e.args, '\033[m')
+                                    print('\nO Cliente não conseguiu receber uma resposta.. \nVoltando ao menu..\n\n')
+                                    sleep(1.5)
 
                         else:
                             sleep(0.3)
@@ -177,12 +183,33 @@ class ClienteMODBUS():
                         nvezes = input('Quantidade de leituras: ')
                         print('\nComeçando leitura..\n')
                         sleep(1)
-                        for i in range(0, int(nvezes)):
-                            print(f'\033[33mLeitura {i + 1}:\033[m')
-                            self.lerDado(int(i + 1), int(tipo), int(addr), leng)
-                            sleep(self._scan_time)
-                        print('\nValores lidos e inseridos no DB com sucesso!!\n')
-                        sleep(0.8)
+                        try:
+                            for i in range(0, int(nvezes)):
+                                print(f'\033[33mLeitura {i + 1}:\033[m')
+                                stamp = (i+1)
+                                self.lerDado(int(stamp), int(tipo), int(addr), leng)
+                                sleep(self._scan_time)
+                            print('\nValores lidos e inseridos no DB com sucesso!!\n')
+                            sleep(0.8)
+                        except Exception as e:
+                            print('\033[31mERRO: ', e.args, '\033[m')
+                            try:
+                                sleep(0.5)
+                                print('\033[33m\nSegunda tentativa..\033[m')
+                                if not self._cliente.is_open():
+                                    self._cliente.open()
+                                sleep(2)
+                                for i in range(0, int(nvezes)):
+                                    print(f'\033[33mLeitura {i + 1}:\033[m')
+                                    stamp = (i+1)
+                                    self.lerDado(int(stamp), int(tipo), int(addr), leng)
+                                    sleep(self._scan_time)
+                                print('\nValores lidos e inseridos no DB com sucesso!!\n')
+                                sleep(0.8)
+                            except Exception as e:
+                                print('\033[31mERRO: ', e.args, '\033[m')
+                                print('\nO Cliente não conseguiu receber uma resposta.. \nVoltando ao menu..\n\n')
+                                sleep(1.5)
 
                 elif sel == '2':
                     sleep(1)
