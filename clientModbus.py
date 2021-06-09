@@ -296,12 +296,33 @@ class ClienteMODBUS():
                                 print(f'\nComeçando leitura motor {readm}..\n')
                                 self.createTableReadMotor(readm)
                                 sleep(1)
-                                for i in range(0, int(nvezes)):
-                                    print(f'\033[33mLeitura {i + 1}:\033[m')
-                                    self.lerMotor(int(readm), self.motores)
-                                    sleep(self._scan_time)
-                                print(f'\nValores do motor {readm} lidos e inseridos no DB com sucesso!!\n')
-                                sleep(0.8)
+                                try:
+                                    for i in range(0, int(nvezes)):
+                                        print(f'\033[33mLeitura {i + 1}:\033[m')
+                                        stamp = (i+1)
+                                        self.lerMotor(int(readm), self.motores)
+                                        sleep(self._scan_time)
+                                    print(f'\nValores do motor {readm} lidos e inseridos no DB com sucesso!!\n')
+                                    sleep(0.8)
+                                except Exception as e:
+                                    print('\033[31mERRO: ', e.args, '\033[m')
+                                    try:
+                                        sleep(0.5)
+                                        print('\033[33m\nSegunda tentativa..\033[m')
+                                        if not self._cliente.is_open():
+                                            self._cliente.open()
+                                        sleep(2)
+                                        for i in range(0, int(nvezes)):
+                                            print(f'\033[33mLeitura {i + 1}:\033[m')
+                                            stamp = (i+1)
+                                            self.lerMotor(int(readm), self.motores)
+                                            sleep(self._scan_time)
+                                        print(f'\nValores do motor {readm} lidos e inseridos no DB com sucesso!!\n')
+                                        sleep(0.8)
+                                    except Exception as e:
+                                        print('\033[31mERRO: ', e.args, '\033[m')
+                                        print('\nO Cliente não conseguiu receber uma resposta.. \nVoltando ao menu..\n\n')
+                                        sleep(1.5)
                             else:
                                 print(f'\033[33m\nNão existem motores cadastrados!\033[m \nCadastre pelo menos um motor.\n')
                                 sleep(2)
