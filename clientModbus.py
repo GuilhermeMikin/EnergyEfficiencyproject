@@ -46,7 +46,7 @@ class ClienteMODBUS():
                 print('-' * 34)
                 print('Sistema de Monitoramento'.center(34))
                 print('-' * 34)
-                sel = input("Qual serviço? \n1- Leitura Modbus \n2- Escrita Modbus \n3- Configuração de leitura \n4- Cadastrar Motor \n5- Leitura Motor \n6- Sair \nServiço: ")
+                sel = input("Qual serviço deseja realizar? \n1- Leitura Modbus \n2- Escrita Modbus \n3- Configuração de leitura \n4- Cadastrar Motor \n5- Leitura Motor \n6- Sair \nN° Serviço: ")
                 if sel == '1':
                     self.createTable()
                     self.createTableenergy()
@@ -88,8 +88,9 @@ class ClienteMODBUS():
                                 print('\033[31mERRO: ', e.args, '\033[m')
                                 try:
                                     sleep(0.5)
-                                    print('\033[33m\nSegunda tentativa..\033[m')
+                                    print('\nSegunda tentativa..')
                                     if not self._cliente.is_open():
+                                        print('\nReiniciando cliente Modbus..\n')
                                         self._cliente.open()
                                     sleep(2)
                                     for i in range(0, int(nvezes)):
@@ -101,8 +102,8 @@ class ClienteMODBUS():
                                     sleep(0.8)
                                 except Exception as e:
                                     print('\033[31mERRO: ', e.args, '\033[m')
-                                    print('\nO Cliente não conseguiu receber uma resposta.. \nVoltando ao menu..\n\n')
-                                    sleep(1.5)
+                                    print('\nInfelizmente o Cliente não conseguiu receber uma resposta..\nÉ sugerido reiniciar todo o sistema. \nCaso isso não resolva, entre em contato com a assistência técnica. \nVoltando ao menu..\n\n')
+                                    sleep(2.5)
 
                         elif val == 2: #valores FLOAT
                             addr = input(f'\nAddress: ')
@@ -122,8 +123,9 @@ class ClienteMODBUS():
                                 print('\033[31mERRO: ', e.args, '\033[m')
                                 try:
                                     sleep(0.5)
-                                    print('\033[33m\nSegunda tentativa..\033[m')
+                                    print('\nSegunda tentativa..')
                                     if not self._cliente.is_open():
+                                        print('\nReiniciando cliente Modbus..\n')
                                         self._cliente.open()
                                     sleep(2)
                                     for i in range(0, int(nvezes)):
@@ -135,8 +137,8 @@ class ClienteMODBUS():
                                     sleep(0.8)
                                 except Exception as e:
                                     print('\033[31mERRO: ', e.args, '\033[m')
-                                    print('\nO Cliente não conseguiu receber uma resposta.. \nVoltando ao menu..\n\n')
-                                    sleep(1.5)
+                                    print('\nInfelizmente o Cliente não conseguiu receber uma resposta..\nÉ sugerido reiniciar todo o sistema. \nCaso isso não resolva, entre em contato com a assistência técnica. \nVoltando ao menu..\n\n')
+                                    sleep(2.5)
 
                         elif val == 3: #valores FLOAT SWAPPED 
                             addr = input(f'\nAddress: ')
@@ -156,8 +158,9 @@ class ClienteMODBUS():
                                 print('\033[31mERRO: ', e.args, '\033[m')
                                 try:
                                     sleep(0.5)
-                                    print('\033[33m\nSegunda tentativa..\033[m')
+                                    print('\nSegunda tentativa..')
                                     if not self._cliente.is_open():
+                                        print('\nReiniciando cliente Modbus..\n')
                                         self._cliente.open()
                                     sleep(2)
                                     for i in range(0, int(nvezes)):
@@ -169,8 +172,8 @@ class ClienteMODBUS():
                                     sleep(0.8)
                                 except Exception as e:
                                     print('\033[31mERRO: ', e.args, '\033[m')
-                                    print('\nO Cliente não conseguiu receber uma resposta.. \nVoltando ao menu..\n\n')
-                                    sleep(1.5)
+                                    print('\nInfelizmente o Cliente não conseguiu receber uma resposta..\nÉ sugerido reiniciar todo o sistema. \nCaso isso não resolva, entre em contato com a assistência técnica. \nVoltando ao menu..\n\n')
+                                    sleep(2.5)
 
                         else:
                             sleep(0.3)
@@ -195,8 +198,9 @@ class ClienteMODBUS():
                             print('\033[31mERRO: ', e.args, '\033[m')
                             try:
                                 sleep(0.5)
-                                print('\033[33m\nSegunda tentativa..\033[m')
+                                print('\nSegunda tentativa..')
                                 if not self._cliente.is_open():
+                                    print('\nReiniciando cliente Modbus..\n')
                                     self._cliente.open()
                                 sleep(2)
                                 for i in range(0, int(nvezes)):
@@ -208,8 +212,8 @@ class ClienteMODBUS():
                                 sleep(0.8)
                             except Exception as e:
                                 print('\033[31mERRO: ', e.args, '\033[m')
-                                print('\nO Cliente não conseguiu receber uma resposta.. \nVoltando ao menu..\n\n')
-                                sleep(1.5)
+                                print('\nInfelizmente o Cliente não conseguiu receber uma resposta..\nÉ sugerido reiniciar todo o sistema. \nCaso isso não resolva, entre em contato com a assistência técnica. \nVoltando ao menu..\n\n')
+                                sleep(2.5)
 
                 elif sel == '2':
                     sleep(1)
@@ -310,8 +314,9 @@ class ClienteMODBUS():
                                     print('\033[31mERRO: ', e.args, '\033[m')
                                     try:
                                         sleep(0.5)
-                                        print('\033[33m\nSegunda tentativa..\033[m')
+                                        print('\nSegunda tentativa..')
                                         if not self._cliente.is_open():
+                                            print('\nReiniciando cliente Modbus..\n')
                                             self._cliente.open()
                                         sleep(2)
                                         for i in range(0, int(nvezes)):
@@ -323,10 +328,10 @@ class ClienteMODBUS():
                                         sleep(0.8)
                                     except Exception as e:
                                         print('\033[31mERRO: ', e.args, '\033[m')
-                                        print('\nO Cliente não conseguiu receber uma resposta.. \nVoltando ao menu..\n\n')
-                                        sleep(1.5)
+                                        print('\nInfelizmente o Cliente não conseguiu receber uma resposta..\nÉ sugerido reiniciar todo o sistema. \nCaso isso não resolva, entre em contato com a assistência técnica. \nVoltando ao menu..\n\n')
+                                        sleep(2.5)
                             else:
-                                print(f'\033[33m\nNão existem motores cadastrados!\033[m \nCadastre pelo menos um motor.\n')
+                                print(f'\033[33m\nNão existem motores cadastrados!\033[m \nPor favor, cadastre pelo menos um motor.\n')
                                 sleep(2)
                                 
                     except Exception as e:
