@@ -11,17 +11,21 @@ class ClienteMODBUS():
     Classe Cliente MODBUS
     """
 
-    def __init__(self, server_ip, porta, scan_time=2, valor=0, dbpath="C:\database.db"):
+    def __init__(self, server_ip, porta, device_id=1, scan_time=2, valor=0, dbpath="C:\database.db"):
         """
         Construtor
         """
-        self._cliente = ModbusClient(host=server_ip, port=porta)
         self._scan_time = scan_time
+        self._server_ip = server_ip
+        self._device_id = device_id
+        self._port = porta
+        self._cliente = ModbusClient(host=server_ip, port=porta, unit_id=device_id)
         
         self._dbpath = dbpath
         self._valor = valor
         self._con = sqlite3.connect(self._dbpath)
         self._cursor = self._con.cursor()
+    
 
         self.motores = list()
         try:
@@ -43,19 +47,19 @@ class ClienteMODBUS():
         try:
             atendimento = True
             while atendimento:
-                print('-' * 34)
-                print('Sistema de Monitoramento'.center(34))
-                print('-' * 34)
+                print('-' * 34*3)
+                print('\033[34mSistema de Monitoramento\033[m'.center(34*3))
+                print('-' * 34*3)
                 sel = input("Qual serviço deseja realizar? \n1- Leitura Modbus \n2- Escrita Modbus \n3- Configuração de leitura \n4- Cadastrar Motor \n5- Leitura Motor \n6- Sair \nN° Serviço: ")
                 if sel == '1':
                     self.createTable()
                     self.createTableenergy()
                     self.createTableModbus()
                     print('\nQual tipo de dado deseja ler?')
-                    print("1- Coil Status \n2- Input Status \n3- Holding Register \n4- Input Register")
+                    print("1- Coil Status \n2- Input Status \n3- Holding Register \n4- Input Register \n5- Voltar")
                     while True:
                         tipo = int(input("Type: "))
-                        if tipo > 4:
+                        if tipo > 5:
                             print('\033[31mDigite um tipo válido..\033[m')
                             sleep(0.8)
                         else:
@@ -179,7 +183,9 @@ class ClienteMODBUS():
                             sleep(0.3)
                             print('\033[31mSeleção inválida..\033[m\n')
                             sleep(0.7)
-
+                    elif tipo ==5:
+                        print('\nVoltando ao menu inicial..\n')
+                        sleep(0.5)
                     else:
                         addr = input(f'\nAddress: ')
                         leng = int(input(f'Length: '))
@@ -233,8 +239,67 @@ class ClienteMODBUS():
                     self.escreveDado(int(tipo), int(addr), valor)
 
                 elif sel == '3':
-                    scant = input('Novo tempo de varredura [s]: ')
-                    self._scan_time = float(scant)
+                    print('')
+                    print('-' * 34*3)
+                    print('Configurações de Leitura'.center(34*3))
+                    print(f'\n\033[32m->\033[m Configuração de leitura atual: - IP Addrs: \033[35m{self._server_ip}\033[m - TCP Port: \033[35m{self._port}\033[m - Device ID: \033[35m{self._device_id}\033[m - Scan_Time: \033[35m{self._scan_time}s\033[m')
+                    print('\nQual tipo de configuração deseja fazer? \n1- Endereço IP \n2- Porta TCP \n3- Device ID \n4- ScanTime \n5- Voltar')
+                    config = int(input("Configuração: "))
+                    if config == 1:
+                        ipserv = str(input('Novo endereço IP: '))
+                        try:
+                            self._cliente.close()
+                            self._server_ip = ipserv
+                            self._cliente = ModbusClient(host=self._server_ip)
+                            self._cliente.open()
+                            print(f'\nServer IP alterado para {ipserv} com sucesso!!\n')
+                            sleep(1)
+                        except Exception as e:
+                            print('\033[31mERRO: ', e.args, '\033[m')
+                            print('\nNão foi possível alterar o endereço IP.. \nVoltando ao menu..\n\n')
+                            sleep(0.5)
+                    elif config == 2:
+                        porttcp = input('Nova porta TCP: ')
+                        try:
+                            self._cliente.close()
+                            self._port = int(porttcp)
+                            self._cliente = ModbusClient(port=self._port)
+                            self._cliente.open()
+                            print(f'\nTCP port alterado para {porttcp} com sucesso!!\n')
+                            sleep(1)
+                        except Exception as e:
+                            print('\033[31mERRO: ', e.args, '\033[m')
+                            print('\nNão foi possível alterar a porta.. \nVoltando ao menu..\n\n')
+                            sleep(0.5)
+                    elif config == 3:
+                        iddevice = input('Novo device ID: ')
+                        try:
+                            self._cliente.close()
+                            self._device_id = int(iddevice)
+                            self._cliente = ModbusClient(unit_id=self._device_id)
+                            self._cliente.open()
+                            print(f'\nDevice ID alterado para {iddevice} com sucesso!!\n')
+                            sleep(1)
+                        except Exception as e:
+                            print('\033[31mERRO: ', e.args, '\033[m')
+                            print('\nNão foi possível alterar o ID do device.. \nVoltando ao menu..\n\n')
+                            sleep(0.5)
+                    elif config == 4:
+                        scant = input('Novo tempo de varredura [s]: ')
+                        try:    
+                            self._scan_time = float(scant)
+                            print(f'\nScan_time alterado para {scant}s com sucesso!!\n')
+                        except Exception as e:
+                            print('\033[31mERRO: ', e.args, '\033[m')
+                            print('\nNão foi possível alterar o tempo de varredura.. \nVoltando ao menu..\n\n')
+                            sleep(0.5)
+                    elif config == 5:
+                        print('\nVoltando ao menu inicial..\n')
+                        sleep(0.5)
+                    else:
+                        sleep(0.3)
+                        print('\033[31mSeleção inválida..\033[m\n')
+                        sleep(0.7)
                 
                 elif sel == '4':
                     self.createTableMotor()

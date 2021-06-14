@@ -2,5 +2,5 @@ from clientModbus import ClienteMODBUS
 
 dbpath = "C:\\Users\\Guilherme B. Lopes\\Documents\\GitHub\\EnergyEfficiencyproject\\DB\\database1.db"
 
-c = ClienteMODBUS('localhost', 502, dbpath=dbpath)
+c = ClienteMODBUS('127.0.0.1', 502, dbpath=dbpath)
 c.atendimento()
