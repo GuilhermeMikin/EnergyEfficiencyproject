@@ -494,6 +494,7 @@ class ClienteMODBUS():
                 dados_motor_arq['rendmotor'] = mot[7]
                 dados_motor_arq['fpmotor'] = mot[8]
                 dados_motor_arq['addrmotor'] = mot[9]
+                # dados_motor_arq['laststamp'] = mot[10]
                 self.motores.append(dados_motor_arq.copy())
             return self.motores
         except Exception as e:
@@ -503,7 +504,7 @@ class ClienteMODBUS():
             self.arq.seek(0, 0)
             self.arq.close()
        
-    def writeArq(self,modmotor,polmotor,pnmotor,pnmotorkw,Vmotor,Imotor,rpmmotor,rendmotor,fpmotor,addrmotor):
+    def writeArq(self,modmotor,polmotor,pnmotor,pnmotorkw,Vmotor,Imotor,rpmmotor,rendmotor,fpmotor,addrmotor,laststamp=0):
         try:
             self.arq = open('motores.txt', 'at')
         except Exception as e:
@@ -511,6 +512,7 @@ class ClienteMODBUS():
         else:
             try:
                 self.arq.write(f'{modmotor};{polmotor};{pnmotor};{pnmotorkw};{Vmotor};{Imotor};{rpmmotor};{rendmotor};{fpmotor};{addrmotor}\n')
+                # self.arq.write(f'{modmotor};{polmotor};{pnmotor};{pnmotorkw};{Vmotor};{Imotor};{rpmmotor};{rendmotor};{fpmotor};{addrmotor};{laststamp}\n')
             except Exception as e:
                 print('\033[31mERRO: ', e.args, '\033[m')
             finally:
