@@ -322,8 +322,10 @@ class ClienteMODBUS():
                         dados_motor['rendmotor'] = rendmotor
                         fpmotor = float(input('Fator de Potência: '))
                         dados_motor['fpmotor'] = fpmotor
-                        addrmotor = int(input('Endereço Modbus do motor: '))
+                        addrmotor = int(input('Modbus Address: '))
                         dados_motor['addrmotor'] = addrmotor
+                        # deviceidmotor = int(input('Modbus Device Id: '))
+                        # dados_motor['devidmotor'] = deviceidmotor 
                         #self.motores.append(dados_motor.copy())
                         try:
                             self.inserirDBMotor(modmotor=modmotor, polmotor=polmotor, pnmotor=pnmotor, Vmotor=Vmotor, Imotor=Imotor, rpmmotor=rpmmotor, rendmotor=rendmotor, fpmotor=fpmotor, addrmotor=addrmotor)
