@@ -361,7 +361,7 @@ class ClienteMODBUS():
                                     if readm <= len(self.motores):
                                         break
                                     print('\033[31mERRO! Digite um ID de motor válido.\033[m')
-                                nvezes = input('Quantidade de leituras: ')
+                                nvezes = int(input('Quantidade de leituras: '))
                                 print(f'\nComeçando leitura motor {readm}..\n')
                                 self.createTableReadMotor(readm)
                                 sleep(1)
@@ -371,8 +371,9 @@ class ClienteMODBUS():
                                         stamp = (i+1)
                                         self.lerMotor(int(stamp), int(readm), self.motores)
                                         sleep(self._scan_time)
-                                        # newlaststamp = int(mot["laststamp"])+i
-                                        # self.editlinhaArq(readm-1,mot["modmotor"],mot["polmotor"],mot["pnmotor"],mot["pnmotorkw"],mot["Vmotor"],mot["Imotor"],mot["rpmmotor"],mot["rendmotor"],mot["fpmotor"],mot["addrmotor"],newlaststamp)
+                                    m = self.motores[readm-1]
+                                    newlaststamp = int(m["laststamp"])+nvezes
+                                    self.editlinhaArq(readm-1,m["modmotor"],m["polmotor"],m["pnmotor"],m["pnmotorkw"],m["Vmotor"],m["Imotor"],m["rpmmotor"],m["rendmotor"],m["fpmotor"],m["addrmotor"],newlaststamp)
                                     print(f'\nValores do motor {readm} lidos e inseridos no DB com sucesso!!\n')
                                     sleep(0.8)
                                 except Exception as e:
@@ -483,7 +484,7 @@ class ClienteMODBUS():
             for line in self.arq.readlines():
                 dados_motor_arq.clear()
                 mot = line.split(';')
-                mot[9] = mot[9].replace('\n', '')
+                mot[10] = mot[10].replace('\n', '')
                 dados_motor_arq['modmotor'] = mot[0]
                 dados_motor_arq['polmotor'] = mot[1]
                 dados_motor_arq['pnmotor'] = mot[2]
@@ -494,7 +495,7 @@ class ClienteMODBUS():
                 dados_motor_arq['rendmotor'] = mot[7]
                 dados_motor_arq['fpmotor'] = mot[8]
                 dados_motor_arq['addrmotor'] = mot[9]
-                # dados_motor_arq['laststamp'] = mot[10]
+                dados_motor_arq['laststamp'] = mot[10]
                 self.motores.append(dados_motor_arq.copy())
             return self.motores
         except Exception as e:
@@ -511,25 +512,24 @@ class ClienteMODBUS():
             print('\033[31mERRO: ', e.args, '\033[m')
         else:
             try:
-                self.arq.write(f'{modmotor};{polmotor};{pnmotor};{pnmotorkw};{Vmotor};{Imotor};{rpmmotor};{rendmotor};{fpmotor};{addrmotor}\n')
-                # self.arq.write(f'{modmotor};{polmotor};{pnmotor};{pnmotorkw};{Vmotor};{Imotor};{rpmmotor};{rendmotor};{fpmotor};{addrmotor};{laststamp}\n')
+                self.arq.write(f'{modmotor};{polmotor};{pnmotor};{pnmotorkw};{Vmotor};{Imotor};{rpmmotor};{rendmotor};{fpmotor};{addrmotor};{laststamp}\n')
             except Exception as e:
                 print('\033[31mERRO: ', e.args, '\033[m')
             finally:
                 self.arq.close()
 
-    # def editlinhaArq(self,index_linha,modmotor,polmotor,pnmotor,pnmotorkw,Vmotor,Imotor,rpmmotor,rendmotor,fpmotor,addrmotor,laststamp):
-    #     try:
-    #         with open('motores.txt', 'r') as f:
-    #             text = f.readlines()
-    #         with open('motores.txt', 'w') as f:
-    #             for i in text:
-    #                 if text.index(i)==index_linha:
-    #                     f.write(f'{modmotor};{polmotor};{pnmotor};{pnmotorkw};{Vmotor};{Imotor};{rpmmotor};{rendmotor};{fpmotor};{addrmotor};{laststamp}\n')
-    #                 else:
-    #                     f.write(i)
-    #     except Exception as e:
-    #         print('\033[31mERRO: ', e.args, '\033[m')
+    def editlinhaArq(self,index_linha,modmotor,polmotor,pnmotor,pnmotorkw,Vmotor,Imotor,rpmmotor,rendmotor,fpmotor,addrmotor,laststamp):
+        try:
+            with open('motores.txt', 'r') as f:
+                text = f.readlines()
+            with open('motores.txt', 'w') as f:
+                for i in text:
+                    if text.index(i)==index_linha:
+                        f.write(f'{modmotor};{polmotor};{pnmotor};{pnmotorkw};{Vmotor};{Imotor};{rpmmotor};{rendmotor};{fpmotor};{addrmotor};{laststamp}\n')
+                    else:
+                        f.write(i)
+        except Exception as e:
+            print('\033[31mERRO: ', e.args, '\033[m')
     
 
     def createTableReadMotor(self, readm):
@@ -638,9 +638,10 @@ class ClienteMODBUS():
             inomot = float(motor['Imotor'])
             rendmot = float(motor['rendmotor'])
             fpmot = float(motor['fpmotor'])
+            newstamp = int(motor['laststamp'])+stamp
             pelec = potap*fpmot
             rendcalc = round(((pmecmot/pelec)*100), 2)
-            str_values = f"{stamp}, '{modmot}', {pmecmot}, {potap}, {tnomot}, {valuet}, {inomot}, {valuec}, {rendmot}, {rendcalc}, {fpmot},  {valuetemp+acrtemp}, '{date}'"
+            str_values = f"{newstamp}, '{modmot}', {pmecmot}, {potap}, {tnomot}, {valuet}, {inomot}, {valuec}, {rendmot}, {rendcalc}, {fpmot},  {valuetemp+acrtemp}, '{date}'"
             sql_str = f'INSERT INTO energyTable (Stamp, Modelo, "P. Mecânica (W)", "P. Aparente (VA)", "Tensão Nominal (V)", "Tensão Medida (V)", "Corrente Nominal (A)", "Corrente Medida (A)", "Rendimento Motor (%)", "Rendimento Calc (%)", "FP Motor", "Temperatura (C°)", TimeStamp1) VALUES ({str_values})'
             self._cursor.execute(sql_str)
             self._con.commit()
@@ -973,15 +974,6 @@ class ClienteMODBUS():
             y += 2
             # self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore,  namep=namep, value=round(value, 2))
             self.inserirDBModbus(stamp=stamp, addrs=(ende+addr+y-2), tipo=tipore, value=value)
-        # noaddr = "'- - -'"
-        # typecalc = "'CALC.'"
-        # medcn = "'Corrente Média Trifásica (A)'"
-        # valuec = (valuec1+valuec2+valuec3)/3
-        # self.inserirDB(addrs=noaddr, tipo=typecalc, namep=medcn, value=round(valuec, 2))
-        # npotap = "'Potência Aparente (VA)'"
-        # potap = valuec*1.73205080757*valuet
-        # self.inserirDB(addrs=noaddr, tipo=typecalc, namep=npotap, value=round(potap, 2))
-        # self.inserirDBenergy(valuec=round(valuec, 3), valuet=valuet, potap=round(potap, 3), valuetemp=valuetemp)
         return
 
     def lerDadoFloatSwapped(self, stamp, tipo, addr, leng):
@@ -1053,16 +1045,7 @@ class ClienteMODBUS():
                 namep = "'-Unknown-'"
             y += 2
             # self.inserirDB(addrs=(ende+addr+y-2), tipo=tipore,  namep=namep, value=round(value, 2))
-            self.inserirDBModbus(stamp=stamp, addrs=(ende+addr+y-2), tipo=tipore, value=value)
-        # noaddr = "'- - -'"
-        # typecalc = "'CALC.'"
-        # medcn = "'Corrente Média Trifásica (A)'"
-        # valuec = (valuec1+valuec2+valuec3)/3
-        # self.inserirDB(addrs=noaddr, tipo=typecalc, namep=medcn, value=round(valuec, 2))
-        # npotap = "'Potência Aparente (VA)'"
-        # potap = valuec*1.73205080757*valuet
-        # self.inserirDB(addrs=noaddr, tipo=typecalc, namep=npotap, value=round(potap, 2))
-        # self.inserirDBenergy(valuec=round(valuec, 3), valuet=valuet, potap=round(potap, 3), valuetemp=valuetemp)    
+            self.inserirDBModbus(stamp=stamp, addrs=(ende+addr+y-2), tipo=tipore, value=value)  
         return
 
 
