@@ -52,6 +52,15 @@ class ClienteMODBUS():
                 print('-' * 34*3)
                 sel = input("Qual serviço deseja realizar? \n1- Leitura Modbus \n2- Escrita Modbus \n3- Configuração de leitura \n4- Cadastrar Motor \n5- Leitura Motor \n6- Sair \nN° Serviço: ")
                 if sel == '1':
+                    print('\n-> Testando comunicação.. ', end='')
+                    try:
+                        self._cliente.close()
+                        self._cliente = ModbusClient(unit_id=self._device_id)
+                        self._cliente.open()
+                        print(' Tudo OK..')
+                    except Exception as e:
+                        print('A comunicação falhou, reveja as configurações de leitura ou reinicie o sistema..')
+                        print('\033[31mERRO: ', e.args, '\033[m')
                     self.createTable()
                     self.createTableenergy()
                     self.createTableModbus()
@@ -222,7 +231,10 @@ class ClienteMODBUS():
                                 sleep(2.5)
 
                 elif sel == '2':
-                    sleep(1)
+                    sleep(0.2)
+                    self._cliente.close()
+                    self._cliente = ModbusClient(unit_id=self._device_id)
+                    self._cliente.open()
                     print('\nQual tipo de dado deseja escrever? \n1- Coil Status \n2- Holding Register')
                     sleep(0.5)
                     while True:
@@ -236,17 +248,17 @@ class ClienteMODBUS():
                     valor = int(input(f'Digite o valor que deseja escrever: '))
                     print('\nEscrevendo..')
                     sleep(1.5)
-                    self.escreveDado(int(tipo), int(addr), valor)
+                    self.escreveDado(stamp=0, tipo=int(tipo), addr=int(addr), valor=valor)
 
                 elif sel == '3':
                     print('')
                     print('-' * 34*3)
                     print('Configurações de Leitura'.center(34*3))
-                    print(f'\n\033[32m->\033[m Configuração de leitura atual: - IP Addrs: \033[35m{self._server_ip}\033[m - TCP Port: \033[35m{self._port}\033[m - Device ID: \033[35m{self._device_id}\033[m - Scan_Time: \033[35m{self._scan_time}s\033[m')
+                    print(f'\n\033[32m->\033[m Configuração atual: - IP Addrs: \033[35m{self._server_ip}\033[m - TCP Port: \033[35m{self._port}\033[m - Device ID: \033[35m{self._device_id}\033[m - Scan_Time: \033[35m{self._scan_time}\033[ms')
                     print('\nQual tipo de configuração deseja fazer? \n1- Endereço IP \n2- Porta TCP \n3- Device ID \n4- ScanTime \n5- Voltar')
                     config = int(input("Configuração: "))
                     if config == 1:
-                        ipserv = str(input('Novo endereço IP: '))
+                        ipserv = str(input(' Novo endereço IP: '))
                         try:
                             self._cliente.close()
                             self._server_ip = ipserv
@@ -259,7 +271,7 @@ class ClienteMODBUS():
                             print('\nNão foi possível alterar o endereço IP.. \nVoltando ao menu..\n\n')
                             sleep(0.5)
                     elif config == 2:
-                        porttcp = input('Nova porta TCP: ')
+                        porttcp = input(' Nova porta TCP: ')
                         try:
                             self._cliente.close()
                             self._port = int(porttcp)
@@ -272,7 +284,13 @@ class ClienteMODBUS():
                             print('\nNão foi possível alterar a porta.. \nVoltando ao menu..\n\n')
                             sleep(0.5)
                     elif config == 3:
-                        iddevice = input('Novo device ID: ')
+                        while True:
+                            iddevice = input(' Novo device ID: ')
+                            if 0 <= int(iddevice) < 256:
+                                break
+                            else:
+                                print('\033[31mDevice ID deve ser um número inteiro entre 0 e 256.\033[m', end='')
+                                sleep(0.5)
                         try:
                             self._cliente.close()
                             self._device_id = int(iddevice)
@@ -285,7 +303,7 @@ class ClienteMODBUS():
                             print('\nNão foi possível alterar o ID do device.. \nVoltando ao menu..\n\n')
                             sleep(0.5)
                     elif config == 4:
-                        scant = input('Novo tempo de varredura [s]: ')
+                        scant = input(' Novo tempo de varredura [s]: ')
                         try:    
                             self._scan_time = float(scant)
                             print(f'\nScan_time alterado para {scant}s com sucesso!!\n')
@@ -324,11 +342,11 @@ class ClienteMODBUS():
                         dados_motor['fpmotor'] = fpmotor
                         addrmotor = int(input('Modbus Address: '))
                         dados_motor['addrmotor'] = addrmotor
-                        # deviceidmotor = int(input('Modbus Device Id: '))
-                        # dados_motor['devidmotor'] = deviceidmotor 
+                        devidmotor = int(input('Modbus Device Id: '))
+                        dados_motor['devidmotor'] = devidmotor 
                         #self.motores.append(dados_motor.copy())
                         try:
-                            self.inserirDBMotor(modmotor=modmotor, polmotor=polmotor, pnmotor=pnmotor, Vmotor=Vmotor, Imotor=Imotor, rpmmotor=rpmmotor, rendmotor=rendmotor, fpmotor=fpmotor, addrmotor=addrmotor)
+                            self.inserirDBMotor(modmotor=modmotor, polmotor=polmotor, pnmotor=pnmotor, Vmotor=Vmotor, Imotor=Imotor, rpmmotor=rpmmotor, rendmotor=rendmotor, fpmotor=fpmotor, addrmotor=addrmotor, devidmotor=devidmotor)
                             sleep(0.5)
                         except Exception as e:
                             print('Erro ao cadastrar motor!')
@@ -364,18 +382,23 @@ class ClienteMODBUS():
                                         break
                                     print('\033[31mERRO! Digite um ID de motor válido.\033[m')
                                 nvezes = int(input('Quantidade de leituras: '))
+                                m = self.motores[readm-1]
+                                self._cliente.close()
+                                device_id = int(m["devidmotor"])
+                                self._cliente = ModbusClient(unit_id=device_id)
+                                self._cliente.open()
                                 print(f'\nComeçando leitura motor {readm}..\n')
                                 self.createTableReadMotor(readm)
-                                sleep(1)
+                                sleep(0.3)
                                 try:
                                     for i in range(0, int(nvezes)):
                                         print(f'\033[33mLeitura {i + 1}:\033[m')
                                         stamp = (i+1)
-                                        self.lerMotor(int(stamp), int(readm), self.motores)
+                                        self.lerMotor(int(stamp), int(readm), motores=self.motores)
                                         sleep(self._scan_time)
                                     m = self.motores[readm-1]
                                     newlaststamp = int(m["laststamp"])+nvezes
-                                    self.editlinhaArq(readm-1,m["modmotor"],m["polmotor"],m["pnmotor"],m["pnmotorkw"],m["Vmotor"],m["Imotor"],m["rpmmotor"],m["rendmotor"],m["fpmotor"],m["addrmotor"],newlaststamp)
+                                    self.editlinhaArq(readm-1,m["modmotor"],m["polmotor"],m["pnmotor"],m["pnmotorkw"],m["Vmotor"],m["Imotor"],m["rpmmotor"],m["rendmotor"],m["fpmotor"],m["addrmotor"],m["devidmotor"],newlaststamp)
                                     print(f'\nValores do motor {readm} lidos e inseridos no DB com sucesso!!\n')
                                     sleep(0.8)
                                 except Exception as e:
@@ -486,7 +509,7 @@ class ClienteMODBUS():
             for line in self.arq.readlines():
                 dados_motor_arq.clear()
                 mot = line.split(';')
-                mot[10] = mot[10].replace('\n', '')
+                mot[11] = mot[11].replace('\n', '')
                 dados_motor_arq['modmotor'] = mot[0]
                 dados_motor_arq['polmotor'] = mot[1]
                 dados_motor_arq['pnmotor'] = mot[2]
@@ -497,7 +520,8 @@ class ClienteMODBUS():
                 dados_motor_arq['rendmotor'] = mot[7]
                 dados_motor_arq['fpmotor'] = mot[8]
                 dados_motor_arq['addrmotor'] = mot[9]
-                dados_motor_arq['laststamp'] = mot[10]
+                dados_motor_arq['devidmotor'] = mot[10] 
+                dados_motor_arq['laststamp'] = mot[11]
                 self.motores.append(dados_motor_arq.copy())
             return self.motores
         except Exception as e:
@@ -507,27 +531,27 @@ class ClienteMODBUS():
             self.arq.seek(0, 0)
             self.arq.close()
        
-    def writeArq(self,modmotor,polmotor,pnmotor,pnmotorkw,Vmotor,Imotor,rpmmotor,rendmotor,fpmotor,addrmotor,laststamp=0):
+    def writeArq(self,modmotor,polmotor,pnmotor,pnmotorkw,Vmotor,Imotor,rpmmotor,rendmotor,fpmotor,addrmotor,devidmotor,laststamp=0):
         try:
             self.arq = open('motores.txt', 'at')
         except Exception as e:
             print('\033[31mERRO: ', e.args, '\033[m')
         else:
             try:
-                self.arq.write(f'{modmotor};{polmotor};{pnmotor};{pnmotorkw};{Vmotor};{Imotor};{rpmmotor};{rendmotor};{fpmotor};{addrmotor};{laststamp}\n')
+                self.arq.write(f'{modmotor};{polmotor};{pnmotor};{pnmotorkw};{Vmotor};{Imotor};{rpmmotor};{rendmotor};{fpmotor};{addrmotor};{devidmotor};{laststamp}\n')
             except Exception as e:
                 print('\033[31mERRO: ', e.args, '\033[m')
             finally:
                 self.arq.close()
 
-    def editlinhaArq(self,index_linha,modmotor,polmotor,pnmotor,pnmotorkw,Vmotor,Imotor,rpmmotor,rendmotor,fpmotor,addrmotor,laststamp):
+    def editlinhaArq(self,index_linha,modmotor,polmotor,pnmotor,pnmotorkw,Vmotor,Imotor,rpmmotor,rendmotor,fpmotor,addrmotor,devidmotor,laststamp):
         try:
             with open('motores.txt', 'r') as f:
                 text = f.readlines()
             with open('motores.txt', 'w') as f:
                 for i in text:
                     if text.index(i)==index_linha:
-                        f.write(f'{modmotor};{polmotor};{pnmotor};{pnmotorkw};{Vmotor};{Imotor};{rpmmotor};{rendmotor};{fpmotor};{addrmotor};{laststamp}\n')
+                        f.write(f'{modmotor};{polmotor};{pnmotor};{pnmotorkw};{Vmotor};{Imotor};{rpmmotor};{rendmotor};{fpmotor};{addrmotor};{devidmotor};{laststamp}\n')
                     else:
                         f.write(i)
         except Exception as e:
@@ -556,7 +580,7 @@ class ClienteMODBUS():
         """
         try:
             date = str(datetime.datetime.fromtimestamp(int(time.time())).strftime("%Y-%m-%d %H:%M:%S"))
-            str_values = f"{stamp}, {addrs}, {tipo}, {value}, '{date}'"
+            str_values = f"{stamp}, '{addrs}', {tipo}, {value}, '{date}'"
             sql_str = f'INSERT INTO modbusValues (Stamp, Addr, Type, Value, TimeStamp1) VALUES ({str_values})'
             self._cursor.execute(sql_str)
             self._con.commit()
@@ -651,7 +675,7 @@ class ClienteMODBUS():
         except Exception as e:
             print('\033[31mERRO: ', e.args, '\033[m')
 
-    def inserirDBMotor(self,modmotor='W22',polmotor=6,pnmotor=5,Vmotor=380,Imotor=6.9,rpmmotor=1200,rendmotor=92.4,fpmotor=0.94,addrmotor=1):
+    def inserirDBMotor(self,modmotor='W22',polmotor=6,pnmotor=5,Vmotor=380,Imotor=6.9,rpmmotor=1200,rendmotor=92.4,fpmotor=0.94,addrmotor=1,devidmotor=1):
         """
         Método para inserção dos dados do motor no DB
             modmotor = str(input('Modelo do motor: '))
@@ -674,7 +698,7 @@ class ClienteMODBUS():
             sleep(0.3)
             try:
                 # self.creatArq()
-                self.writeArq(modmotor=modmotor, polmotor=polmotor, pnmotor=pnmotor, pnmotorkw=pnmotorkw, Vmotor=Vmotor, Imotor=Imotor, rpmmotor=rpmmotor, rendmotor=rendmotor, fpmotor=fpmotor, addrmotor=addrmotor)
+                self.writeArq(modmotor=modmotor,polmotor=polmotor,pnmotor=pnmotor,pnmotorkw=pnmotorkw,Vmotor=Vmotor,Imotor=Imotor,rpmmotor=rpmmotor,rendmotor=rendmotor,fpmotor=fpmotor,addrmotor=addrmotor,devidmotor=devidmotor)
             except Exception as e:
                 print('Erro ao inserir motor no arquivo')
                 print('\033[31mERRO: ', e.args, '\033[m')
@@ -858,8 +882,9 @@ class ClienteMODBUS():
                         value = 1
                     else:
                         value = 0
+                    ende = str(str(addr+ic-1).zfill(5))
                     # self.inserirDB(addrs=(addr+ic-1), tipo="'F01CS'", namep="'ON/OFF'", value=value)
-                    self.inserirDBModbus(stamp=stamp, addrs=(addr+ic-1), tipo="'F01-CoilStatus'", value=value)
+                    self.inserirDBModbus(stamp=stamp, addrs=ende, tipo="'F01-CoilStatus'", value=value)
             return 
 
         elif tipo == 2:
@@ -1058,11 +1083,13 @@ class ClienteMODBUS():
         try:
             if tipo == 1:
                 print(f'\033[33mValor {valor} escrito no endereço {addr}\033[m\n')
-                self.inserirDBModbus(stamp=0, addrs=addr, tipo='F01-CS-Input', value=valor)
-                return self._cliente.write_single_coil(addr - 1, valor)
+                ende = str(addr).zfill(5)
+                self.inserirDBModbus(stamp, ende, tipo="'F01-CS-Input'", value=valor)
+                return self._cliente.write_single_coil(int(addr) - 1, valor)
             elif tipo == 2:
                 print(f'\033[33mValor {valor} escrito no endereço {addr}\033[m\n')
-                self.inserirDBModbus(stamp=0, addrs=addr, tipo='F03-HR-Input', value=valor)
+                ende = 40000
+                self.inserirDBModbus(stamp, addrs=(ende+addr), tipo="'F03-HR-Input'", value=valor)
                 return self._cliente.write_single_register(addr - 1, valor)
             else:
                 print('Tipo de escrita inválido..\n')
