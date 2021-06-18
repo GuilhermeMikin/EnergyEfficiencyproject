@@ -9,6 +9,8 @@ Reading modbus displays:
  - Floating Point;
  - Float (Swapped);
 
+Link para demonstração (parcial) no YouTube: https://youtu.be/YvxSWZaimZM
+
 Demonstração do menu inicial:
 
  --> Cliente Modbus conectado..
