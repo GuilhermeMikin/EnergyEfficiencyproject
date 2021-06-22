@@ -26,8 +26,8 @@ class ClienteMODBUS():
         self._con = sqlite3.connect(self._dbpath)
         self._cursor = self._con.cursor()
     
-
         self.motores = list()
+
         try:
             self.arq = open('motores.txt', 'rt')
             self.arq.close()
@@ -50,7 +50,7 @@ class ClienteMODBUS():
                 print('-' * 34*3)
                 print('\033[34mSistema de Monitoramento\033[m'.center(34*3))
                 print('-' * 34*3)
-                sel = input("Qual serviço deseja realizar? \n1- Leitura Modbus \n2- Escrita Modbus \n3- Configuração de leitura \n4- Cadastrar Motor \n5- Leitura Motor \n6- Sair \nN° Serviço: ")
+                sel = input("Qual serviço deseja realizar? \n1- Leitura Modbus \n2- Escrita Modbus \n3- Configuração de leitura \n4- Cadastrar Motor \n5- Leitura Motor \n6- Sair \nNº Serviço: ")
                 if sel == '1':
                     print('\n-> Testando comunicação.. ', end='')
                     try:
