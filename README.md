@@ -1,15 +1,16 @@
-# pyModbusClient
- Um cliente Modbus com pyModbusTCP.
- - Com banco de dados SQLite
- 
+# Projeto Interdisciplinar para Controle e Automação
+Simulação de um Sistema de Monitoramento para Eficiência Energética em Indústrias 4.0
 
-Reading modbus displays:
+ - Cliente Modbus com pyModbusTCP.
+ - Banco de dados SQLite
+
+Lendo modbus displays:
 
  - Decimal;
  - Floating Point;
  - Float (Swapped);
 
-Link para demonstração (parcial) no YouTube: https://youtu.be/YvxSWZaimZM
+Link para demonstração no YouTube: https://youtu.be/YvxSWZaimZM
 
 Demonstração do menu inicial:
 
