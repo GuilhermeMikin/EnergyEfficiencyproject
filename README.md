@@ -31,3 +31,6 @@ Qual serviço?
 Serviço: 6
 
 Fechando sistema..
+
+
+ pyModbusTCP - https://github.com/sourceperl/pyModbusTCP
